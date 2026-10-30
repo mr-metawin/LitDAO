@@ -1,0 +1,95 @@
+type DAO @entity(immutable: false) {
+  id: ID! # Governor address in hex
+  governor: Bytes!
+  token: Bytes!
+  timelock: Bytes!
+  registrant: Bytes!
+  name: String!
+  createdAt: BigInt!
+  createdBlock: BigInt!
+  proposalCount: BigInt!
+  voterCount: BigInt!
+  holderCount: BigInt!
+  proposals: [Proposal!]! @derivedFrom(field: "dao")
+}
+
+type Proposal @entity(immutable: false) {
+  id: ID! # ${governor}-${proposalId}
+  dao: DAO!
+  proposalId: BigInt!
+  proposer: Bytes!
+  targets: [Bytes!]!
+  values: [BigInt!]!
+  calldatas: [Bytes!]!
+  description: String!
+  startBlock: BigInt!
+  endBlock: BigInt!
+  status: String! # Pending, Active, Queued, Executed, Canceled
+  forVotes: BigInt!
+  againstVotes: BigInt!
+  abstainVotes: BigInt!
+  createdAt: BigInt!
+  createdBlock: BigInt!
+  queuedAt: BigInt
+  executedAt: BigInt
+  canceledAt: BigInt
+  votes: [Vote!]! @derivedFrom(field: "proposal")
+}
+
+type Vote @entity(immutable: true) {
+  id: ID! # ${proposalId}-${voter}
+  proposal: Proposal!
+  voter: Bytes!
+  support: Int! # 0 = Against, 1 = For, 2 = Abstain
+  weight: BigInt!
+  reason: String!
+  timestamp: BigInt!
+  blockNumber: BigInt!
+}
+
+type Delegate @entity(immutable: false) {
+  id: ID! # ${token}-${delegator}
+  token: Bytes!
+  delegator: Bytes!
+  delegatee: Bytes!
+  votingPower: BigInt!
+  updatedAt: BigInt!
+}
+
+type TokenHolder @entity(immutable: false) {
+  id: ID! # ${token}-${account}
+  token: Bytes!
+  account: Bytes!
+  balance: BigInt!
+  updatedAt: BigInt!
+}
+
+type Token @entity(immutable: true) {
+  id: ID! # Token address
+  creator: Bytes!
+  name: String!
+  symbol: String!
+  initialSupply: BigInt!
+  createdAt: BigInt!
+}
+
+type Faucet @entity(immutable: false) {
+  id: ID! # Faucet address
+  token: Bytes!
+  admin: Bytes!
+  mode: String!
+  claimCount: BigInt!
+  totalClaimed: BigInt!
+  createdAt: BigInt!
+  claims: [FaucetClaim!]! @derivedFrom(field: "faucet")
+}
+
+type FaucetClaim @entity(immutable: true) {
+  id: ID! # ${txHash}-${logIndex}
+  faucet: Faucet!
+  user: Bytes!
+  amount: BigInt!
+  mode: String!
+  timestamp: BigInt!
+  blockNumber: BigInt!
+}

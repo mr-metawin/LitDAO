@@ -1,0 +1,11 @@
+{
+  "daoRegistry": "0xfF8c3453f5617C0483e3D2f38F70126772D6F247",
+  "demoFaucet": "0x42877a1de0eAD2415Ff4A9394EB11244FD5CEF0d",
+  "demoGovernor": "0x1CB597537cEc0efFB292a16010719b8FC04548F4",
+  "demoTimelock": "0xB293fF6fc141225D13eA4eA7C5EA9fbcc84fa038",
+  "demoToken": "0x6d6bd0Ecf6b3baB9f86ce0AAeD51fe2212288d39",
+  "faucetFactory": "0x01aD919d404Cd4a67F990499753fEBB78d21ED6b",
+  "governorDeployer": "0xA2913242e845D883df43676C0e253D9eDc0605B2",
+  "governorFactory": "0xfE6e5f87AA0be25c73BeF342217F2b170C9e38a2",
+  "tokenFactory": "0x9b3E75Df9bBBCD2b60645ecb473d838f3eAa5dea"
+}

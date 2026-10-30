@@ -1,0 +1,13 @@
+# Environment variables
+.env
+*.env.local
+
+# Foundry
+out/
+cache/
+broadcast/
+
+# Node
+node_modules/
+dist/
+.DS_Store

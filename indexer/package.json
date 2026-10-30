@@ -1,0 +1,15 @@
+{
+  "name": "litdao-indexer",
+  "version": "1.0.0",
+  "description": "Goldsky Subgraph for LitDAO platform on liteforge",
+  "scripts": {
+    "codegen": "graph codegen",
+    "build": "graph build",
+    "deploy": "goldsky subgraph deploy litdao/1.0.0 --path ."
+  },
+  "devDependencies": {
+    "@goldskycom/cli": "^13.18.0",
+    "@graphprotocol/graph-cli": "^0.98.1",
+    "@graphprotocol/graph-ts": "^0.38.2"
+  }
+}
