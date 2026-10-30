@@ -135,7 +135,7 @@ export const FaucetCard: React.FC<FaucetCardProps> = ({
   const cooldownHours = Math.round(cooldownSecs / 3600);
 
   const [eligible] = canClaimData ? (canClaimData as [boolean, bigint]) : [false, 0n];
-  const isAdmin = address && adminData && (adminData as string).toLowerCase() === address.toLowerCase();
+  const isAdmin = Boolean(address && adminData && (adminData as string).toLowerCase() === address.toLowerCase());
 
   const rawFaucetBalance = faucetBalanceData ? BigInt(faucetBalanceData.toString()) : 0n;
   const formattedFaucetBalance = Number(formatUnits(rawFaucetBalance, 18)).toLocaleString();
@@ -152,7 +152,7 @@ export const FaucetCard: React.FC<FaucetCardProps> = ({
   };
 
   const handleClaim = () => {
-    writeClaim({
+    (writeClaim as any)({
       address: faucetAddress,
       abi: ABIS.daoFaucet,
       functionName: 'claimTokens',
@@ -162,7 +162,7 @@ export const FaucetCard: React.FC<FaucetCardProps> = ({
   const handleDepositTokens = () => {
     if (!depositAmount || Number(depositAmount) <= 0) return;
     const parsed = parseUnits(depositAmount, 18);
-    writeDeposit({
+    (writeDeposit as any)({
       address: tokenAddress,
       abi: ABIS.daoToken,
       functionName: 'transfer',
@@ -235,7 +235,7 @@ export const FaucetCard: React.FC<FaucetCardProps> = ({
           </div>
         )}
 
-        {isClaimSuccess ? (
+        {Boolean(isClaimSuccess) ? (
           <div className="p-2.5 rounded-xl bg-brand-500/10 border border-brand-500/20 text-brand-300 text-xs flex items-center gap-2">
             <CheckCircle2 className="w-4 h-4 text-brand-400 shrink-0" />
             <span>Tokens successfully claimed! Remember to activate voting power if not already delegated.</span>

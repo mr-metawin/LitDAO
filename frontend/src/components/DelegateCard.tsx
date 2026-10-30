@@ -69,7 +69,7 @@ export const DelegateCard: React.FC<DelegateCardProps> = ({ tokenAddress, tokenS
 
   const handleSelfDelegate = () => {
     if (!address) return;
-    writeContract({
+    (writeContract as any)({
       address: tokenAddress,
       abi: ABIS.daoToken,
       functionName: 'delegate',
@@ -79,7 +79,7 @@ export const DelegateCard: React.FC<DelegateCardProps> = ({ tokenAddress, tokenS
 
   const handleCustomDelegate = () => {
     if (!isAddress(customDelegatee)) return;
-    writeContract({
+    (writeContract as any)({
       address: tokenAddress,
       abi: ABIS.daoToken,
       functionName: 'delegate',

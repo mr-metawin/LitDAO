@@ -78,7 +78,7 @@ export const CreateProposalModal: React.FC<CreateProposalModalProps> = ({
       calldatas = [(calldataHex.startsWith('0x') ? calldataHex : `0x${calldataHex}`) as `0x${string}`];
     }
 
-    writeContract({
+    (writeContract as any)({
       address: governorAddress,
       abi: ABIS.daoGovernor,
       functionName: 'propose',

@@ -173,14 +173,14 @@ export const ProposalDetailPage: React.FC = () => {
   const handleCastVote = (support: number) => {
     setSelectedSupport(support);
     if (voteReason.trim()) {
-      writeVote({
+      (writeVote as any)({
         address: governor,
         abi: ABIS.daoGovernor,
         functionName: 'castVoteWithReason',
         args: [rawProposalId, support, voteReason.trim()],
       });
     } else {
-      writeVote({
+      (writeVote as any)({
         address: governor,
         abi: ABIS.daoGovernor,
         functionName: 'castVote',
@@ -192,7 +192,7 @@ export const ProposalDetailPage: React.FC = () => {
   const handleQueue = () => {
     if (!proposalData) return;
     const descriptionHash = keccak256(stringToBytes(proposalData.description));
-    writeQueue({
+    (writeQueue as any)({
       address: governor,
       abi: ABIS.daoGovernor,
       functionName: 'queue',
@@ -208,7 +208,7 @@ export const ProposalDetailPage: React.FC = () => {
   const handleExecute = () => {
     if (!proposalData) return;
     const descriptionHash = keccak256(stringToBytes(proposalData.description));
-    writeExecute({
+    (writeExecute as any)({
       address: governor,
       abi: ABIS.daoGovernor,
       functionName: 'execute',

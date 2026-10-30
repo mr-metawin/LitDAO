@@ -121,7 +121,7 @@ export const CreateDaoPage: React.FC = () => {
     }
 
     const supply = parseUnits(initialSupply || '1000000', 18);
-    writeToken({
+    (writeToken as any)({
       address: CONTRACT_ADDRESSES.tokenFactory,
       abi: ABIS.tokenFactory,
       functionName: 'createToken',
@@ -143,7 +143,7 @@ export const CreateDaoPage: React.FC = () => {
       timelockMinDelay: BigInt(timelockDelay),
     };
 
-    writeGov({
+    (writeGov as any)({
       address: CONTRACT_ADDRESSES.governorFactory,
       abi: ABIS.governorFactory,
       functionName: 'createGovernor',
@@ -156,7 +156,7 @@ export const CreateDaoPage: React.FC = () => {
     const token = deployedTokenAddr;
     if (!token) return;
 
-    writeFaucet({
+    (writeFaucet as any)({
       address: CONTRACT_ADDRESSES.faucetFactory,
       abi: ABIS.faucetFactory,
       functionName: 'createFaucet',
