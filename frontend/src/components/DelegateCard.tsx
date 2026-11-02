@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
-import { useAccount, useReadContract, useWriteContract, useWaitForTransactionReceipt } from 'wagmi';
+import { useAccount, useReadContract, useWriteContract, useWaitForTransactionReceipt, usePublicClient } from 'wagmi';
 import { formatUnits, isAddress } from 'viem';
 import { ShieldCheck, UserCheck, AlertCircle, Loader2, CheckCircle2 } from 'lucide-react';
 import { ABIS } from '../config/contracts';
+import { getSafeGasFees } from '../config/chain';
 
 interface DelegateCardProps {
   tokenAddress: `0x${string}`;
@@ -11,6 +12,7 @@ interface DelegateCardProps {
 
 export const DelegateCard: React.FC<DelegateCardProps> = ({ tokenAddress, tokenSymbol }) => {
   const { address, isConnected } = useAccount();
+  const publicClient = usePublicClient();
   const [customDelegatee, setCustomDelegatee] = useState('');
   const [showCustomInput, setShowCustomInput] = useState(false);
 
@@ -67,24 +69,36 @@ export const DelegateCard: React.FC<DelegateCardProps> = ({ tokenAddress, tokenS
   const hasZeroDelegation = !currentDelegatee || currentDelegatee === '0x0000000000000000000000000000000000000000';
   const hasTokensWithoutVotes = rawBalance > 0n && rawVotes === 0n;
 
-  const handleSelfDelegate = () => {
+  const handleSelfDelegate = async () => {
     if (!address) return;
-    (writeContract as any)({
-      address: tokenAddress,
-      abi: ABIS.daoToken,
-      functionName: 'delegate',
-      args: [address],
-    });
+    try {
+      const feeOverrides = await getSafeGasFees(publicClient);
+      (writeContract as any)({
+        address: tokenAddress,
+        abi: ABIS.daoToken,
+        functionName: 'delegate',
+        args: [address],
+        ...feeOverrides,
+      });
+    } catch (err: any) {
+      console.error('Failed to self delegate:', err);
+    }
   };
 
-  const handleCustomDelegate = () => {
+  const handleCustomDelegate = async () => {
     if (!isAddress(customDelegatee)) return;
-    (writeContract as any)({
-      address: tokenAddress,
-      abi: ABIS.daoToken,
-      functionName: 'delegate',
-      args: [customDelegatee as `0x${string}`],
-    });
+    try {
+      const feeOverrides = await getSafeGasFees(publicClient);
+      (writeContract as any)({
+        address: tokenAddress,
+        abi: ABIS.daoToken,
+        functionName: 'delegate',
+        args: [customDelegatee as `0x${string}`],
+        ...feeOverrides,
+      });
+    } catch (err: any) {
+      console.error('Failed to custom delegate:', err);
+    }
   };
 
   const isPending = isWritePending || isTxWaiting;
@@ -211,8 +225,10 @@ export const DelegateCard: React.FC<DelegateCardProps> = ({ tokenAddress, tokenS
           </div>
 
           {writeError && (
-            <p className="text-xs text-rose-400 bg-rose-500/10 p-2.5 rounded-lg border border-rose-500/20">
-              Error: {writeError.message.slice(0, 100)}
+            <p className="text-xs text-rose-400 bg-rose-500/10 p-2.5 rounded-lg border border-rose-500/20 break-words">
+              {writeError.message.includes('max fee per gas less than block base fee')
+                ? 'Gas fee fluctuation on LitVM. Please try again with updated gas.'
+                : (writeError as any).shortMessage || writeError.message.slice(0, 180)}
             </p>
           )}
         </div>

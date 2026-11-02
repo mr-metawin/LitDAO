@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { useAccount, useReadContract, useWriteContract, useWaitForTransactionReceipt } from 'wagmi';
+import { useAccount, useReadContract, useWriteContract, useWaitForTransactionReceipt, usePublicClient } from 'wagmi';
 import { formatUnits, keccak256, stringToBytes } from 'viem';
 import {
   ArrowLeft,
@@ -15,9 +15,11 @@ import {
   Shield,
   Play,
   Layers,
+  AlertCircle,
+  UserCheck,
 } from 'lucide-react';
 import { ABIS } from '../config/contracts';
-import { litvm } from '../config/chain';
+import { litvm, getSafeGasFees } from '../config/chain';
 import { querySubgraph, GET_PROPOSAL_DETAILS_QUERY } from '../services/subgraph';
 import { useQuery } from '@tanstack/react-query';
 
@@ -41,6 +43,7 @@ export const ProposalDetailPage: React.FC = () => {
   const governor = governorAddress as `0x${string}`;
   const rawProposalId = proposalId ? BigInt(proposalId) : 0n;
   const { address, isConnected } = useAccount();
+  const publicClient = usePublicClient();
 
   const [voteReason, setVoteReason] = useState('');
   const [selectedSupport, setSelectedSupport] = useState<number | null>(null);
@@ -89,13 +92,32 @@ export const ProposalDetailPage: React.FC = () => {
   const tokenAddress = tokenAddressData as `0x${string}` | undefined;
 
   // Read user's voting power at snapshot
-  const { data: userPowerData } = useReadContract({
+  const { data: userPowerData, isLoading: isUserPowerLoading } = useReadContract({
     address: tokenAddress,
     abi: ABIS.daoToken,
     functionName: 'getPastVotes',
     args: address && snapshotData ? [address, snapshotData] : undefined,
     query: { enabled: !!address && !!snapshotData && !!tokenAddress },
   });
+
+  // Current balance & active voting power to provide clear context
+  const { data: currentBalanceData } = useReadContract({
+    address: tokenAddress,
+    abi: ABIS.daoToken,
+    functionName: 'balanceOf',
+    args: address ? [address] : undefined,
+    query: { enabled: !!address && !!tokenAddress },
+  });
+  const { data: currentVotesData, refetch: refetchCurrentVotes } = useReadContract({
+    address: tokenAddress,
+    abi: ABIS.daoToken,
+    functionName: 'getVotes',
+    args: address ? [address] : undefined,
+    query: { enabled: !!address && !!tokenAddress },
+  });
+
+  // Delegate action right from proposal page
+  const { writeContract: writeDelegate, isPending: isDelegatePending } = useWriteContract();
 
   // Read whether user has already voted
   const { data: hasVotedData, refetch: refetchHasVoted } = useReadContract({
@@ -163,6 +185,8 @@ export const ProposalDetailPage: React.FC = () => {
   const abstainPct = totalVotes > 0n ? Number((abstainVotesRaw * 100n) / totalVotes) : 0;
 
   const userPower = userPowerData ? BigInt(userPowerData.toString()) : 0n;
+  const rawBalance = currentBalanceData ? BigInt(currentBalanceData.toString()) : 0n;
+  const rawCurrentVotes = currentVotesData ? BigInt(currentVotesData.toString()) : 0n;
   const hasVoted = Boolean(hasVotedData);
 
   const descriptionText = proposalData?.description || 'Governance Proposal on LitVM';
@@ -170,55 +194,74 @@ export const ProposalDetailPage: React.FC = () => {
   const title = descriptionLines[0].replace(/^#+\s*/, '') || `Proposal #${proposalId}`;
   const bodyText = descriptionLines.slice(1).join('\n').trim();
 
-  const handleCastVote = (support: number) => {
+  const handleCastVote = async (support: number) => {
     setSelectedSupport(support);
-    if (voteReason.trim()) {
-      (writeVote as any)({
-        address: governor,
-        abi: ABIS.daoGovernor,
-        functionName: 'castVoteWithReason',
-        args: [rawProposalId, support, voteReason.trim()],
-      });
-    } else {
-      (writeVote as any)({
-        address: governor,
-        abi: ABIS.daoGovernor,
-        functionName: 'castVote',
-        args: [rawProposalId, support],
-      });
+    try {
+      const feeOverrides = await getSafeGasFees(publicClient);
+      if (voteReason.trim()) {
+        (writeVote as any)({
+          address: governor,
+          abi: ABIS.daoGovernor,
+          functionName: 'castVoteWithReason',
+          args: [rawProposalId, support, voteReason.trim()],
+          ...feeOverrides,
+        });
+      } else {
+        (writeVote as any)({
+          address: governor,
+          abi: ABIS.daoGovernor,
+          functionName: 'castVote',
+          args: [rawProposalId, support],
+          ...feeOverrides,
+        });
+      }
+    } catch (err: any) {
+      console.error('Failed to cast vote:', err);
     }
   };
 
-  const handleQueue = () => {
+  const handleQueue = async () => {
     if (!proposalData) return;
-    const descriptionHash = keccak256(stringToBytes(proposalData.description));
-    (writeQueue as any)({
-      address: governor,
-      abi: ABIS.daoGovernor,
-      functionName: 'queue',
-      args: [
-        proposalData.targets as `0x${string}`[],
-        proposalData.values.map((v: string) => BigInt(v)),
-        proposalData.calldatas as `0x${string}`[],
-        descriptionHash,
-      ],
-    });
+    try {
+      const feeOverrides = await getSafeGasFees(publicClient);
+      const descriptionHash = keccak256(stringToBytes(proposalData.description));
+      (writeQueue as any)({
+        address: governor,
+        abi: ABIS.daoGovernor,
+        functionName: 'queue',
+        args: [
+          proposalData.targets as `0x${string}`[],
+          proposalData.values.map((v: string) => BigInt(v)),
+          proposalData.calldatas as `0x${string}`[],
+          descriptionHash,
+        ],
+        ...feeOverrides,
+      });
+    } catch (err: any) {
+      console.error('Failed to queue proposal:', err);
+    }
   };
 
-  const handleExecute = () => {
+  const handleExecute = async () => {
     if (!proposalData) return;
-    const descriptionHash = keccak256(stringToBytes(proposalData.description));
-    (writeExecute as any)({
-      address: governor,
-      abi: ABIS.daoGovernor,
-      functionName: 'execute',
-      args: [
-        proposalData.targets as `0x${string}`[],
-        proposalData.values.map((v: string) => BigInt(v)),
-        proposalData.calldatas as `0x${string}`[],
-        descriptionHash,
-      ],
-    });
+    try {
+      const feeOverrides = await getSafeGasFees(publicClient);
+      const descriptionHash = keccak256(stringToBytes(proposalData.description));
+      (writeExecute as any)({
+        address: governor,
+        abi: ABIS.daoGovernor,
+        functionName: 'execute',
+        args: [
+          proposalData.targets as `0x${string}`[],
+          proposalData.values.map((v: string) => BigInt(v)),
+          proposalData.calldatas as `0x${string}`[],
+          descriptionHash,
+        ],
+        ...feeOverrides,
+      });
+    } catch (err: any) {
+      console.error('Failed to execute proposal:', err);
+    }
   };
 
   return (
@@ -341,9 +384,52 @@ export const ProposalDetailPage: React.FC = () => {
                   <CheckCircle2 className="w-4 h-4 text-brand-400 shrink-0" />
                   <span>You have already cast your vote on this proposal.</span>
                 </div>
+              ) : isUserPowerLoading ? (
+                <div className="p-3.5 rounded-xl bg-slate-900/60 border border-slate-800 text-slate-400 text-xs flex items-center gap-2">
+                  <Loader2 className="w-4 h-4 animate-spin text-brand-400" />
+                  <span>Checking your voting power at proposal snapshot...</span>
+                </div>
               ) : userPower === 0n ? (
-                <div className="p-3 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-300 text-xs">
-                  Your voting power at snapshot was 0. Tokens must be delegated before proposal creation.
+                <div className="p-3.5 rounded-xl bg-amber-500/10 border border-amber-500/20 text-xs space-y-2">
+                  <div className="font-semibold text-amber-200 flex items-center gap-1.5">
+                    <AlertCircle className="w-4 h-4 text-amber-400 shrink-0" />
+                    <span>0 Voting Power at Proposal Snapshot</span>
+                  </div>
+                  <p className="text-[11px] text-amber-300/80 leading-relaxed">
+                    Under OpenZeppelin governance, voting power is snapshot at the exact block/timestamp when a proposal is created to prevent flash-loan attacks.
+                    {rawBalance > 0n && rawCurrentVotes === 0n ? (
+                      <> You hold {Number(formatUnits(rawBalance, 18)).toLocaleString()} tokens, but have not delegated them yet to activate voting checkpoints.</>
+                    ) : rawCurrentVotes > 0n ? (
+                      <> You have {Number(formatUnits(rawCurrentVotes, 18)).toLocaleString()} active votes now, but they were delegated after this proposal was already created. Your voting power is active and will count for future proposals.</>
+                    ) : (
+                      <> You held 0 delegated tokens when this proposal was submitted.</>
+                    )}
+                  </p>
+                  {rawBalance > 0n && rawCurrentVotes === 0n && (
+                    <button
+                      type="button"
+                      disabled={isDelegatePending}
+                      onClick={async () => {
+                        if (!address || !tokenAddress) return;
+                        try {
+                          const feeOverrides = await getSafeGasFees(publicClient);
+                          (writeDelegate as any)({
+                            address: tokenAddress,
+                            abi: ABIS.daoToken,
+                            functionName: 'delegate',
+                            args: [address],
+                            ...feeOverrides,
+                          });
+                        } catch (err) {
+                          console.error('Failed to delegate:', err);
+                        }
+                      }}
+                      className="w-full mt-1 py-1.5 px-3 rounded-lg bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs transition flex items-center justify-center gap-1.5 shadow"
+                    >
+                      <UserCheck className="w-3.5 h-3.5" />
+                      <span>{isDelegatePending ? 'Delegating on LitVM...' : 'Activate Voting Power (Self-Delegate)'}</span>
+                    </button>
+                  )}
                 </div>
               ) : (
                 <div className="space-y-3">

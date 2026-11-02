@@ -47,9 +47,15 @@ export async function getSafeGasFees(publicClient?: any) {
   }
   try {
     const fees = await publicClient.estimateFeesPerGas();
+    const safeMaxFeePerGas = fees.maxFeePerGas
+      ? (BigInt(fees.maxFeePerGas) * 15n) / 10n
+      : 300000000n;
+    const safePriorityFee = fees.maxPriorityFeePerGas && BigInt(fees.maxPriorityFeePerGas) > 0n
+      ? BigInt(fees.maxPriorityFeePerGas)
+      : 50000000n;
     return {
-      maxFeePerGas: fees.maxFeePerGas,
-      maxPriorityFeePerGas: fees.maxPriorityFeePerGas,
+      maxFeePerGas: safeMaxFeePerGas,
+      maxPriorityFeePerGas: safePriorityFee,
     };
   } catch (err) {
     console.warn('Could not estimate gas fees, using safe fallback:', err);
