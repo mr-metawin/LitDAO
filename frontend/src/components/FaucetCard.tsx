@@ -12,12 +12,14 @@ interface FaucetCardProps {
   faucetAddress?: `0x${string}`;
   tokenAddress: `0x${string}`;
   tokenSymbol: string;
+  isLoadingFaucet?: boolean;
 }
 
 export const FaucetCard: React.FC<FaucetCardProps> = ({
   faucetAddress,
   tokenAddress,
   tokenSymbol,
+  isLoadingFaucet = false,
 }) => {
   const { address, isConnected } = useAccount();
   const publicClient = usePublicClient();
@@ -82,7 +84,7 @@ export const FaucetCard: React.FC<FaucetCardProps> = ({
   });
 
   // Check if faucet holds MINTER_ROLE on the token (required for Mint mode)
-  const { data: hasMinterRoleData, refetch: refetchMinterRole } = useReadContract({
+  const { data: hasMinterRoleData, isLoading: isCheckingMinterRole, refetch: refetchMinterRole } = useReadContract({
     address: tokenAddress,
     abi: ABIS.daoToken,
     functionName: 'hasRole',
@@ -193,6 +195,55 @@ export const FaucetCard: React.FC<FaucetCardProps> = ({
     }
   }, [isGrantSuccess, refetchMinterRole, refetchCanClaim]);
 
+  if (isLoadingFaucet || (!faucetAddress && isLoadingFaucet !== false)) {
+    return (
+      <div className="bg-[#101726] border border-slate-800 rounded-2xl p-6 shadow-md animate-pulse">
+        {/* Header Skeleton */}
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center gap-2.5">
+            <div className="w-9 h-9 rounded-xl bg-cyan-500/10 border border-cyan-500/20 flex items-center justify-center text-cyan-400">
+              <Droplets className="w-5 h-5 text-cyan-400" />
+            </div>
+            <div>
+              <h3 className="font-bold text-white text-base">Token Faucet</h3>
+              <p className="text-xs text-slate-400">Instant testnet voting tokens</p>
+            </div>
+          </div>
+          <span className="text-xs px-2.5 py-1 rounded-full font-semibold border bg-slate-800/80 text-slate-400 border-slate-700/60">
+            Connecting...
+          </span>
+        </div>
+
+        <div className="space-y-4">
+          {/* Info Box Skeleton */}
+          <div className="bg-slate-900/60 p-3.5 rounded-xl border border-slate-800/80 flex items-center justify-between">
+            <div>
+              <span className="text-xs text-slate-400 block mb-0.5">Claim Allowance</span>
+              <span className="text-base font-bold text-slate-300 font-mono">
+                100 <span className="text-xs font-normal text-slate-400">{tokenSymbol}</span>
+              </span>
+            </div>
+            <div className="text-right">
+              <span className="text-xs text-slate-400 block mb-0.5">Cooldown</span>
+              <span className="text-xs font-semibold text-slate-300 font-mono">
+                1 hr
+              </span>
+            </div>
+          </div>
+
+          {/* Placeholder Claim Button */}
+          <button
+            disabled
+            className="w-full py-2.5 px-4 rounded-xl font-semibold text-sm flex items-center justify-center gap-2 bg-slate-800 text-slate-400 border border-slate-700/40 cursor-wait"
+          >
+            <Sparkles className="w-4 h-4 animate-pulse text-cyan-400" />
+            <span>Claim 100 {tokenSymbol}</span>
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   if (!faucetAddress || faucetAddress === '0x0000000000000000000000000000000000000000') {
     return (
       <div className="bg-[#101726] border border-slate-800 rounded-2xl p-6 shadow-md text-slate-400 text-sm text-center">
@@ -204,9 +255,11 @@ export const FaucetCard: React.FC<FaucetCardProps> = ({
 
   const mode = modeData !== undefined ? Number(modeData) : 0; // 0 = MINT, 1 = PRE_FUNDED
   const isPaused = Boolean(pausedData);
-  const rawClaimAmount = claimAmountData ? BigInt(claimAmountData.toString()) : 0n;
-  const formattedClaimAmount = Number(formatUnits(rawClaimAmount, 18)).toLocaleString();
-  const cooldownSecs = cooldownData ? Number(cooldownData) : 0;
+  const rawClaimAmount = claimAmountData ? BigInt(claimAmountData.toString()) : parseUnits('100', 18);
+  const formattedClaimAmount = claimAmountData
+    ? Number(formatUnits(BigInt(claimAmountData.toString()), 18)).toLocaleString()
+    : '100';
+  const cooldownSecs = cooldownData ? Number(cooldownData) : 3600;
 
   const formatCooldownDisplay = (secs: number) => {
     if (secs === 0) return 'None (0s)';
@@ -223,8 +276,14 @@ export const FaucetCard: React.FC<FaucetCardProps> = ({
 
   const isMintMode = mode === 0;
   const isPreFundedMode = mode === 1;
-  const isMissingMinterRole = isMintMode && !hasMinterRole;
-  const isUnderfunded = isPreFundedMode && rawFaucetBalance < rawClaimAmount;
+  // CRITICAL: NEVER flag missing minter role while the query is in flight!
+  // Only flag if the query has finished and returned explicitly false.
+  const isMissingMinterRole = isMintMode && hasMinterRoleData === false;
+  const isUnderfunded = isPreFundedMode && faucetBalanceData !== undefined && rawFaucetBalance < rawClaimAmount;
+
+  // Track initial contract checks in flight to avoid jarring flash
+  const isInitialStateLoading =
+    isConnected && (canClaimData === undefined || (isMintMode && hasMinterRoleData === undefined));
 
   // Format remaining cooldown timer mm:ss or hh:mm:ss
   const formatTime = (secs: number) => {
@@ -474,17 +533,22 @@ export const FaucetCard: React.FC<FaucetCardProps> = ({
         {/* Claim Action Button */}
         <button
           onClick={handleClaim}
-          disabled={!isConnected || !eligible || remainingSeconds > 0 || isClaiming || isPaused || isMissingMinterRole || isUnderfunded}
+          disabled={!isConnected || isInitialStateLoading || !eligible || remainingSeconds > 0 || isClaiming || isPaused || isMissingMinterRole || isUnderfunded}
           className={`w-full py-2.5 px-4 rounded-xl font-semibold text-sm flex items-center justify-center gap-2 transition ${
-            !eligible || remainingSeconds > 0 || isPaused || !isConnected || isMissingMinterRole || isUnderfunded
+            isInitialStateLoading || !eligible || remainingSeconds > 0 || isPaused || !isConnected || isMissingMinterRole || isUnderfunded
               ? 'bg-slate-800 text-slate-500 cursor-not-allowed border border-slate-700/40'
-              : 'bg-cyan-500 hover:bg-cyan-400 text-slate-950 shadow-md shadow-cyan-500/10'
+              : 'bg-cyan-500 hover:bg-cyan-400 text-slate-950 shadow-md shadow-cyan-500/10 cursor-pointer'
           }`}
         >
           {isClaiming ? (
             <>
               <Loader2 className="w-4 h-4 animate-spin" />
               <span>Claiming on LitVM...</span>
+            </>
+          ) : isInitialStateLoading ? (
+            <>
+              <Sparkles className="w-4 h-4 animate-pulse text-cyan-400" />
+              <span>Claim {formattedClaimAmount} {tokenSymbol}</span>
             </>
           ) : (
             <>

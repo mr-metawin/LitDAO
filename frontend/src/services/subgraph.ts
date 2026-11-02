@@ -87,6 +87,11 @@ export const GET_DAO_BY_ID_QUERY = `
       name
       symbol
     }
+    faucets {
+      id
+      token
+      mode
+    }
   }
 `;
 

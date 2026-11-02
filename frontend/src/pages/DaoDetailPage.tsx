@@ -25,6 +25,7 @@ import { FaucetCard } from '../components/FaucetCard';
 import { ProposalCard } from '../components/ProposalCard';
 import { CreateProposalModal } from './CreateProposalModal';
 import { UpdateDaoImageModal } from '../components/UpdateDaoImageModal';
+import { DaoAvatar } from '../components/DaoAvatar';
 import { useDaoMetadata } from '../hooks/useDaoMetadata';
 import { querySubgraph, GET_DAO_BY_ID_QUERY } from '../services/subgraph';
 import { ProposalRecord } from '../types';
@@ -71,8 +72,8 @@ export const DaoDetailPage: React.FC = () => {
   const subgraphDao = subgraphData?.dao;
 
   const [isImageModalOpen, setIsImageModalOpen] = useState(false);
-  const [imgError, setImgError] = useState(false);
   const {
+    rawImageUri,
     imageUrl,
     description: onChainDescription,
     isAuthorized,
@@ -135,20 +136,36 @@ export const DaoDetailPage: React.FC = () => {
     functionName: 'proposalThreshold',
   });
 
+  const subgraphFaucets = (subgraphData as any)?.faucets as Array<{ id: string; token: string; mode: string }> | undefined;
+
   // Dynamically resolve Faucet address for this token from FaucetFactory
-  const { data: faucetAddressData } = useReadContract({
+  const { data: faucetAddressData, isLoading: isFaucetContractLoading } = useReadContract({
     address: CONTRACT_ADDRESSES.faucetFactory,
     abi: ABIS.faucetFactory,
     functionName: 'faucetByToken',
-    args: [tokenAddress],
+    args: tokenAddress ? [tokenAddress] : undefined,
+    query: {
+      enabled: Boolean(tokenAddress),
+    },
   });
 
+  // Fast instant resolution from subgraph
+  const subgraphMatchedFaucet = tokenAddress && subgraphFaucets
+    ? (subgraphFaucets.find((f) => f.token.toLowerCase() === tokenAddress.toLowerCase())?.id as `0x${string}` | undefined)
+    : undefined;
+
   const faucetAddress =
-    faucetAddressData && faucetAddressData !== '0x0000000000000000000000000000000000000000'
+    (faucetAddressData && faucetAddressData !== '0x0000000000000000000000000000000000000000'
       ? (faucetAddressData as `0x${string}`)
-      : (governor.toLowerCase() === CONTRACT_ADDRESSES.demoGovernor.toLowerCase()
-          ? CONTRACT_ADDRESSES.demoFaucet
-          : undefined);
+      : undefined) ||
+    subgraphMatchedFaucet ||
+    (governor.toLowerCase() === CONTRACT_ADDRESSES.demoGovernor.toLowerCase()
+      ? CONTRACT_ADDRESSES.demoFaucet
+      : undefined);
+
+  const isResolvingFaucet =
+    !faucetAddress &&
+    (isSubgraphLoading || isFaucetContractLoading || (!tokenAddressData && !subgraphDao?.token));
 
   // Default known proposal for the live Demo DAO (in case subgraph is indexing or experiencing connect delay)
   const DEMO_PROPOSAL_FALLBACK: ProposalRecord[] = [
@@ -219,16 +236,11 @@ export const DaoDetailPage: React.FC = () => {
           <div className="flex items-start gap-4">
             <div className="relative group w-16 h-16 rounded-2xl bg-gradient-to-tr from-brand-600 to-brand-400 p-0.5 shadow-lg shadow-brand-500/20 shrink-0">
               <div className="w-full h-full bg-slate-950 rounded-[14px] overflow-hidden flex items-center justify-center">
-                {imageUrl && !imgError ? (
-                  <img
-                    src={imageUrl}
-                    alt={daoName}
-                    className="w-full h-full object-cover"
-                    onError={() => setImgError(true)}
-                  />
-                ) : (
-                  <Layers className="w-8 h-8 text-brand-400" />
-                )}
+                <DaoAvatar
+                  imageUri={rawImageUri || subgraphDao?.imageUri}
+                  alt={daoName}
+                  fallbackIconClassName="w-8 h-8 text-brand-400"
+                />
               </div>
               {isCreatorOrAdmin && (
                 <button
@@ -381,8 +393,9 @@ export const DaoDetailPage: React.FC = () => {
         />
         <FaucetCard
           faucetAddress={faucetAddress}
-          tokenAddress={tokenAddress}
+          tokenAddress={tokenAddress || CONTRACT_ADDRESSES.demoToken}
           tokenSymbol={tokenSymbol}
+          isLoadingFaucet={isResolvingFaucet}
         />
       </div>
 

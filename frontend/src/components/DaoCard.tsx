@@ -1,16 +1,16 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowUpRight, Vote, Users, Coins, Layers } from 'lucide-react';
+import { ArrowUpRight, Vote, Users, Coins } from 'lucide-react';
 import { DAORecord } from '../types';
 import { useDaoMetadata } from '../hooks/useDaoMetadata';
+import { DaoAvatar } from './DaoAvatar';
 
 interface DaoCardProps {
   dao: DAORecord;
 }
 
 export const DaoCard: React.FC<DaoCardProps> = ({ dao }) => {
-  const [imgError, setImgError] = React.useState(false);
-  const { imageUrl } = useDaoMetadata(dao.governor as `0x${string}`, dao.imageUri);
+  const { rawImageUri } = useDaoMetadata(dao.governor as `0x${string}`, dao.imageUri);
 
   const tokenSymbol = typeof dao.token === 'object' && dao.token?.symbol 
     ? dao.token.symbol 
@@ -23,16 +23,11 @@ export const DaoCard: React.FC<DaoCardProps> = ({ dao }) => {
         <div className="flex items-center justify-between gap-2 mb-4">
           <div className="flex items-center gap-2">
             <div className="w-10 h-10 rounded-xl bg-slate-800/90 border border-slate-700/60 overflow-hidden flex items-center justify-center text-brand-400 group-hover:border-brand-500/50 group-hover:scale-105 transition shrink-0">
-              {imageUrl && !imgError ? (
-                <img
-                  src={imageUrl}
-                  alt={dao.name}
-                  className="w-full h-full object-cover"
-                  onError={() => setImgError(true)}
-                />
-              ) : (
-                <Layers className="w-5 h-5 text-brand-400" />
-              )}
+              <DaoAvatar
+                imageUri={rawImageUri || dao.imageUri}
+                alt={dao.name}
+                fallbackIconClassName="w-5 h-5 text-brand-400"
+              />
             </div>
             <div>
               <h3 className="font-bold text-lg text-white group-hover:text-brand-300 transition tracking-tight line-clamp-1">

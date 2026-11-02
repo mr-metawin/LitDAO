@@ -944,13 +944,13 @@ export const CreateDaoPage: React.FC = () => {
             )}
 
             <div className="flex items-center gap-3 pt-2">
-              <button
+              {/* <button
                 type="button"
                 onClick={() => navigate(`/dao/${deployedGovernorAddr}`)}
                 className="px-5 py-3 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 font-semibold text-xs transition"
               >
                 Skip Faucet & View DAO
-              </button>
+              </button> */}
 
               {!isConnected ? (
                 <button
