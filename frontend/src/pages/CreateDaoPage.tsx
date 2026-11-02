@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAccount, useWriteContract, useWaitForTransactionReceipt } from 'wagmi';
-import { parseUnits, parseEther, isAddress, decodeEventLog } from 'viem';
+import { useConnectModal } from '@rainbow-me/rainbowkit';
+import { parseUnits, isAddress, decodeEventLog } from 'viem';
 import {
   Layers,
   Sparkles,
@@ -12,12 +13,18 @@ import {
   Loader2,
   Droplets,
   Coins,
+  AlertCircle,
+  Wallet,
 } from 'lucide-react';
 import { CONTRACT_ADDRESSES, ABIS } from '../config/contracts';
 
 export const CreateDaoPage: React.FC = () => {
   const navigate = useNavigate();
   const { address, isConnected } = useAccount();
+  const { openConnectModal } = useConnectModal();
+
+  // Local form error
+  const [formError, setFormError] = useState<string | null>(null);
 
   // Step 1: Token Configuration
   const [tokenMode, setTokenMode] = useState<'new' | 'existing'>('new');
@@ -27,6 +34,7 @@ export const CreateDaoPage: React.FC = () => {
   const [existingTokenAddress, setExistingTokenAddress] = useState('');
 
   // Step 2: Governor Parameters
+  const [daoName, setDaoName] = useState('My Community DAO');
   const [votingDelay, setVotingDelay] = useState('5'); // 5 seconds
   const [votingPeriod, setVotingPeriod] = useState('300'); // 5 minutes
   const [proposalThreshold, setProposalThreshold] = useState('100'); // 100 tokens
@@ -46,22 +54,43 @@ export const CreateDaoPage: React.FC = () => {
 
   // Contract Writes
   // 1. Create Token
-  const { data: tokenTxHash, writeContract: writeToken, isPending: isTokenPending } = useWriteContract();
-  const { isLoading: isTokenWaiting, isSuccess: isTokenSuccess, data: tokenReceipt } = useWaitForTransactionReceipt({
+  const { data: tokenTxHash, writeContract: writeToken, isPending: isTokenPending, error: tokenError } = useWriteContract();
+  const { isLoading: isTokenWaiting, isSuccess: isTokenSuccess, data: tokenReceipt, error: tokenReceiptError } = useWaitForTransactionReceipt({
     hash: tokenTxHash,
   });
 
   // 2. Create Governor
-  const { data: govTxHash, writeContract: writeGov, isPending: isGovPending } = useWriteContract();
-  const { isLoading: isGovWaiting, isSuccess: isGovSuccess, data: govReceipt } = useWaitForTransactionReceipt({
+  const { data: govTxHash, writeContract: writeGov, isPending: isGovPending, error: govError } = useWriteContract();
+  const { isLoading: isGovWaiting, isSuccess: isGovSuccess, data: govReceipt, error: govReceiptError } = useWaitForTransactionReceipt({
     hash: govTxHash,
   });
 
   // 3. Create Faucet
-  const { data: faucetTxHash, writeContract: writeFaucet, isPending: isFaucetPending } = useWriteContract();
-  const { isLoading: isFaucetWaiting, isSuccess: isFaucetSuccess } = useWaitForTransactionReceipt({
+  const { data: faucetTxHash, writeContract: writeFaucet, isPending: isFaucetPending, error: faucetError } = useWriteContract();
+  const { isLoading: isFaucetWaiting, isSuccess: isFaucetSuccess, data: faucetReceipt, error: faucetReceiptError } = useWaitForTransactionReceipt({
     hash: faucetTxHash,
   });
+
+  // Error Helper
+  const getErrorMessage = (err: any) => {
+    if (!err) return null;
+    if (typeof err === 'string') return err;
+    if (err.shortMessage) return err.shortMessage;
+    if (err.details) return err.details;
+    if (err.message) {
+      if (err.message.includes('User rejected') || err.message.includes('User denied')) {
+        return 'Transaction rejected in your wallet.';
+      }
+      return err.message.slice(0, 180);
+    }
+    return 'An unexpected error occurred.';
+  };
+
+  const currentError =
+    formError ||
+    (currentStep === 1 && (getErrorMessage(tokenError) || getErrorMessage(tokenReceiptError) || (tokenReceipt?.status === 'reverted' ? 'Token deployment transaction reverted on-chain.' : null))) ||
+    (currentStep === 2 && (getErrorMessage(govError) || getErrorMessage(govReceiptError) || (govReceipt?.status === 'reverted' ? 'Governor deployment transaction reverted on-chain.' : null))) ||
+    (currentStep === 3 && (getErrorMessage(faucetError) || getErrorMessage(faucetReceiptError) || (faucetReceipt?.status === 'reverted' ? 'Faucet deployment transaction reverted on-chain.' : null)));
 
   // Extract deployed token address from TokenCreated event
   React.useEffect(() => {
@@ -76,6 +105,7 @@ export const CreateDaoPage: React.FC = () => {
           if (decoded.eventName === 'TokenCreated') {
             const token = (decoded.args as any).token;
             setDeployedTokenAddr(token);
+            setFormError(null);
             setCurrentStep(2);
             break;
           }
@@ -99,8 +129,11 @@ export const CreateDaoPage: React.FC = () => {
           if (decoded.eventName === 'GovernorCreated') {
             const gov = (decoded.args as any).governor;
             setDeployedGovernorAddr(gov);
+            setFormError(null);
             if (enableFaucet) {
               setCurrentStep(3);
+            } else {
+              navigate(`/dao/${gov}`);
             }
             break;
           }
@@ -109,64 +142,128 @@ export const CreateDaoPage: React.FC = () => {
         }
       }
     }
-  }, [govReceipt, enableFaucet]);
+  }, [govReceipt, enableFaucet, navigate]);
+
+  // Redirect after faucet creation is confirmed
+  React.useEffect(() => {
+    if (isFaucetSuccess && deployedGovernorAddr) {
+      navigate(`/dao/${deployedGovernorAddr}`);
+    }
+  }, [isFaucetSuccess, deployedGovernorAddr, navigate]);
 
   const handleCreateToken = (e: React.FormEvent) => {
     e.preventDefault();
+    setFormError(null);
+
     if (tokenMode === 'existing') {
-      if (!isAddress(existingTokenAddress)) return;
-      setDeployedTokenAddr(existingTokenAddress as `0x${string}`);
+      const trimmed = existingTokenAddress.trim();
+      if (!isAddress(trimmed)) {
+        setFormError('Please enter a valid ERC-20 token address (0x...)');
+        return;
+      }
+      setDeployedTokenAddr(trimmed as `0x${string}`);
       setCurrentStep(2);
       return;
     }
 
-    const supply = parseUnits(initialSupply || '1000000', 18);
-    (writeToken as any)({
-      address: CONTRACT_ADDRESSES.tokenFactory,
-      abi: ABIS.tokenFactory,
-      functionName: 'createToken',
-      args: [tokenName, tokenSymbol, supply],
-    });
+    if (!isConnected || !address) {
+      if (openConnectModal) {
+        openConnectModal();
+      } else {
+        setFormError('Please connect your wallet first.');
+      }
+      return;
+    }
+
+    try {
+      const supply = parseUnits(initialSupply || '1000000', 18);
+      (writeToken as any)({
+        address: CONTRACT_ADDRESSES.tokenFactory,
+        abi: ABIS.tokenFactory,
+        functionName: 'createToken',
+        args: [tokenName.trim(), tokenSymbol.trim(), supply, address],
+      });
+    } catch (err: any) {
+      setFormError(err?.message || 'Failed to initiate token deployment');
+    }
   };
 
   const handleCreateGovernor = (e: React.FormEvent) => {
     e.preventDefault();
+    setFormError(null);
+
     const token = deployedTokenAddr;
-    if (!token) return;
+    if (!token) {
+      setFormError('No token address found. Please complete Step 1 first.');
+      return;
+    }
 
-    const params = {
-      token: token,
-      votingDelay: BigInt(votingDelay),
-      votingPeriod: BigInt(votingPeriod),
-      proposalThreshold: parseUnits(proposalThreshold || '0', 18),
-      quorumFraction: BigInt(quorumFraction),
-      timelockMinDelay: BigInt(timelockDelay),
-    };
+    if (!isConnected || !address) {
+      if (openConnectModal) {
+        openConnectModal();
+      } else {
+        setFormError('Please connect your wallet first.');
+      }
+      return;
+    }
 
-    (writeGov as any)({
-      address: CONTRACT_ADDRESSES.governorFactory,
-      abi: ABIS.governorFactory,
-      functionName: 'createGovernor',
-      args: [params],
-    });
+    try {
+      const name = daoName.trim() || `${tokenName} DAO`;
+      const params = {
+        name: name,
+        token: token,
+        votingDelay: BigInt(votingDelay || '5'),
+        votingPeriod: BigInt(votingPeriod || '300'),
+        proposalThreshold: parseUnits(proposalThreshold || '0', 18),
+        quorumFraction: BigInt(quorumFraction || '4'),
+        timelockMinDelay: BigInt(timelockDelay || '60'),
+      };
+
+      (writeGov as any)({
+        address: CONTRACT_ADDRESSES.governorFactory,
+        abi: ABIS.governorFactory,
+        functionName: 'createGovernor',
+        args: [params],
+      });
+    } catch (err: any) {
+      setFormError(err?.message || 'Failed to initiate governor deployment');
+    }
   };
 
   const handleCreateFaucet = (e: React.FormEvent) => {
     e.preventDefault();
-    const token = deployedTokenAddr;
-    if (!token) return;
+    setFormError(null);
 
-    (writeFaucet as any)({
-      address: CONTRACT_ADDRESSES.faucetFactory,
-      abi: ABIS.faucetFactory,
-      functionName: 'createFaucet',
-      args: [
-        token,
-        parseUnits(claimAmount || '100', 18),
-        BigInt(cooldownPeriod || '3600'),
-        faucetMode,
-      ],
-    });
+    const token = deployedTokenAddr;
+    if (!token) {
+      setFormError('No token address found.');
+      return;
+    }
+
+    if (!isConnected || !address) {
+      if (openConnectModal) {
+        openConnectModal();
+      } else {
+        setFormError('Please connect your wallet first.');
+      }
+      return;
+    }
+
+    try {
+      (writeFaucet as any)({
+        address: CONTRACT_ADDRESSES.faucetFactory,
+        abi: ABIS.faucetFactory,
+        functionName: 'createFaucet',
+        args: [
+          token,
+          parseUnits(claimAmount || '100', 18),
+          BigInt(cooldownPeriod || '3600'),
+          faucetMode,
+        ],
+      });
+    } catch (err: any) {
+      setFormError(err?.message || 'Failed to initiate faucet deployment');
+    }
   };
 
   return (
@@ -240,7 +337,10 @@ export const CreateDaoPage: React.FC = () => {
             <div className="flex rounded-xl bg-slate-900 p-1 border border-slate-800">
               <button
                 type="button"
-                onClick={() => setTokenMode('new')}
+                onClick={() => {
+                  setTokenMode('new');
+                  setFormError(null);
+                }}
                 className={`flex-1 py-2 text-xs font-semibold rounded-lg transition ${
                   tokenMode === 'new' ? 'bg-slate-800 text-white' : 'text-slate-400'
                 }`}
@@ -249,7 +349,10 @@ export const CreateDaoPage: React.FC = () => {
               </button>
               <button
                 type="button"
-                onClick={() => setTokenMode('existing')}
+                onClick={() => {
+                  setTokenMode('existing');
+                  setFormError(null);
+                }}
                 className={`flex-1 py-2 text-xs font-semibold rounded-lg transition ${
                   tokenMode === 'existing' ? 'bg-slate-800 text-white' : 'text-slate-400'
                 }`}
@@ -266,7 +369,10 @@ export const CreateDaoPage: React.FC = () => {
                     <input
                       type="text"
                       value={tokenName}
-                      onChange={(e) => setTokenName(e.target.value)}
+                      onChange={(e) => {
+                        setTokenName(e.target.value);
+                        setDaoName(`${e.target.value} DAO`);
+                      }}
                       required
                       className="w-full bg-slate-900 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-slate-100 focus:outline-none focus:border-brand-500"
                     />
@@ -312,23 +418,51 @@ export const CreateDaoPage: React.FC = () => {
               </div>
             )}
 
-            <button
-              type="submit"
-              disabled={!isConnected || isTokenPending || isTokenWaiting}
-              className="w-full py-3 rounded-xl bg-brand-600 hover:bg-brand-500 text-slate-950 font-bold text-sm transition flex items-center justify-center gap-2 shadow-lg shadow-brand-500/10"
-            >
-              {isTokenWaiting ? (
-                <>
-                  <Loader2 className="w-4 h-4 animate-spin" />
-                  <span>Deploying Token on LitVM...</span>
-                </>
-              ) : (
-                <>
-                  <span>Continue to Governor Setup</span>
-                  <ArrowRight className="w-4 h-4" />
-                </>
-              )}
-            </button>
+            {currentError && (
+              <div className="p-3 bg-rose-500/10 border border-rose-500/20 rounded-xl text-xs text-rose-400 flex items-start gap-2">
+                <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
+                <span className="flex-1 break-words">{currentError}</span>
+              </div>
+            )}
+
+            {!isConnected ? (
+              <button
+                type="button"
+                onClick={() => (openConnectModal ? openConnectModal() : null)}
+                className="w-full py-3 rounded-xl bg-brand-600 hover:bg-brand-500 text-slate-950 font-bold text-sm transition flex items-center justify-center gap-2 shadow-lg shadow-brand-500/10 cursor-pointer"
+              >
+                <Wallet className="w-4 h-4" />
+                <span>Connect Wallet to Continue</span>
+              </button>
+            ) : (
+              <button
+                type="submit"
+                disabled={isTokenPending || isTokenWaiting}
+                className="w-full py-3 rounded-xl bg-brand-600 hover:bg-brand-500 disabled:opacity-50 disabled:cursor-not-allowed text-slate-950 font-bold text-sm transition flex items-center justify-center gap-2 shadow-lg shadow-brand-500/10"
+              >
+                {isTokenPending ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    <span>Confirm in Wallet...</span>
+                  </>
+                ) : isTokenWaiting ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    <span>Deploying Token on LitVM...</span>
+                  </>
+                ) : tokenMode === 'existing' ? (
+                  <>
+                    <span>Continue to Governor Setup</span>
+                    <ArrowRight className="w-4 h-4" />
+                  </>
+                ) : (
+                  <>
+                    <span>Deploy Token & Continue to Governor</span>
+                    <ArrowRight className="w-4 h-4" />
+                  </>
+                )}
+              </button>
+            )}
           </form>
         </div>
       )}
@@ -349,6 +483,19 @@ export const CreateDaoPage: React.FC = () => {
           <form onSubmit={handleCreateGovernor} className="space-y-4">
             <div className="p-3 bg-slate-900/60 rounded-xl border border-slate-800 text-xs text-slate-300 font-mono">
               Token Address: <span className="text-brand-400">{deployedTokenAddr}</span>
+            </div>
+
+            <div>
+              <label className="text-xs font-medium text-slate-300 block mb-1">
+                DAO / Governor Name
+              </label>
+              <input
+                type="text"
+                value={daoName}
+                onChange={(e) => setDaoName(e.target.value)}
+                required
+                className="w-full bg-slate-900 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-slate-100 focus:outline-none focus:border-brand-500"
+              />
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -422,23 +569,59 @@ export const CreateDaoPage: React.FC = () => {
               </div>
             </div>
 
-            <button
-              type="submit"
-              disabled={isGovPending || isGovWaiting}
-              className="w-full py-3 rounded-xl bg-brand-600 hover:bg-brand-500 text-slate-950 font-bold text-sm transition flex items-center justify-center gap-2 shadow-lg shadow-brand-500/10"
-            >
-              {isGovWaiting ? (
-                <>
-                  <Loader2 className="w-4 h-4 animate-spin" />
-                  <span>Deploying Governor & Timelock...</span>
-                </>
-              ) : (
-                <>
-                  <span>Deploy Governor & Timelock</span>
-                  <ArrowRight className="w-4 h-4" />
-                </>
-              )}
-            </button>
+            <div className="flex items-center gap-3 p-3 bg-slate-900/60 rounded-xl border border-slate-800">
+              <input
+                type="checkbox"
+                id="enableFaucetCheckbox"
+                checked={enableFaucet}
+                onChange={(e) => setEnableFaucet(e.target.checked)}
+                className="w-4 h-4 text-brand-500 bg-slate-900 border-slate-700 rounded focus:ring-brand-500 focus:ring-2 cursor-pointer"
+              />
+              <label htmlFor="enableFaucetCheckbox" className="text-xs text-slate-300 cursor-pointer select-none">
+                Deploy testnet faucet in Step 3 <span className="text-slate-500">(Recommended for testnet community testing)</span>
+              </label>
+            </div>
+
+            {currentError && (
+              <div className="p-3 bg-rose-500/10 border border-rose-500/20 rounded-xl text-xs text-rose-400 flex items-start gap-2">
+                <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
+                <span className="flex-1 break-words">{currentError}</span>
+              </div>
+            )}
+
+            {!isConnected ? (
+              <button
+                type="button"
+                onClick={() => (openConnectModal ? openConnectModal() : null)}
+                className="w-full py-3 rounded-xl bg-brand-600 hover:bg-brand-500 text-slate-950 font-bold text-sm transition flex items-center justify-center gap-2 shadow-lg shadow-brand-500/10 cursor-pointer"
+              >
+                <Wallet className="w-4 h-4" />
+                <span>Connect Wallet to Continue</span>
+              </button>
+            ) : (
+              <button
+                type="submit"
+                disabled={isGovPending || isGovWaiting}
+                className="w-full py-3 rounded-xl bg-brand-600 hover:bg-brand-500 disabled:opacity-50 disabled:cursor-not-allowed text-slate-950 font-bold text-sm transition flex items-center justify-center gap-2 shadow-lg shadow-brand-500/10"
+              >
+                {isGovPending ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    <span>Confirm in Wallet...</span>
+                  </>
+                ) : isGovWaiting ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    <span>Deploying Governor & Timelock...</span>
+                  </>
+                ) : (
+                  <>
+                    <span>Deploy Governor & Timelock</span>
+                    <ArrowRight className="w-4 h-4" />
+                  </>
+                )}
+              </button>
+            )}
           </form>
         </div>
       )}
@@ -506,6 +689,13 @@ export const CreateDaoPage: React.FC = () => {
               </div>
             </div>
 
+            {currentError && (
+              <div className="p-3 bg-rose-500/10 border border-rose-500/20 rounded-xl text-xs text-rose-400 flex items-start gap-2">
+                <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
+                <span className="flex-1 break-words">{currentError}</span>
+              </div>
+            )}
+
             <div className="flex items-center gap-3 pt-2">
               <button
                 type="button"
@@ -515,23 +705,39 @@ export const CreateDaoPage: React.FC = () => {
                 Skip Faucet & View DAO
               </button>
 
-              <button
-                type="submit"
-                disabled={isFaucetPending || isFaucetWaiting}
-                className="flex-1 py-3 rounded-xl bg-brand-600 hover:bg-brand-500 text-slate-950 font-bold text-sm transition flex items-center justify-center gap-2 shadow-lg shadow-brand-500/10"
-              >
-                {isFaucetWaiting ? (
-                  <>
-                    <Loader2 className="w-4 h-4 animate-spin" />
-                    <span>Deploying Faucet on LitVM...</span>
-                  </>
-                ) : (
-                  <>
-                    <span>Create Faucet & Finalize DAO</span>
-                    <CheckCircle2 className="w-4 h-4" />
-                  </>
-                )}
-              </button>
+              {!isConnected ? (
+                <button
+                  type="button"
+                  onClick={() => (openConnectModal ? openConnectModal() : null)}
+                  className="flex-1 py-3 rounded-xl bg-brand-600 hover:bg-brand-500 text-slate-950 font-bold text-sm transition flex items-center justify-center gap-2 shadow-lg shadow-brand-500/10 cursor-pointer"
+                >
+                  <Wallet className="w-4 h-4" />
+                  <span>Connect Wallet to Continue</span>
+                </button>
+              ) : (
+                <button
+                  type="submit"
+                  disabled={isFaucetPending || isFaucetWaiting}
+                  className="flex-1 py-3 rounded-xl bg-brand-600 hover:bg-brand-500 disabled:opacity-50 disabled:cursor-not-allowed text-slate-950 font-bold text-sm transition flex items-center justify-center gap-2 shadow-lg shadow-brand-500/10"
+                >
+                  {isFaucetPending ? (
+                    <>
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      <span>Confirm in Wallet...</span>
+                    </>
+                  ) : isFaucetWaiting ? (
+                    <>
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      <span>Deploying Faucet on LitVM...</span>
+                    </>
+                  ) : (
+                    <>
+                      <span>Create Faucet & Finalize DAO</span>
+                      <CheckCircle2 className="w-4 h-4" />
+                    </>
+                  )}
+                </button>
+              )}
             </div>
           </form>
         </div>
