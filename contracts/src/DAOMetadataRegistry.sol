@@ -80,20 +80,13 @@ contract DAOMetadataRegistry {
                 if (account == daoInfo.registrant) return true;
                 if (account == daoInfo.governor) return true;
                 if (account == daoInfo.timelock) return true;
-                // DAO is registered in DAORegistry but account is not authorized
                 return false;
             } catch {
-                // If lookup reverts or not yet registered, fall through
+                return false;
             }
         }
 
-        // 4. If not yet in registry and no metadata set, allow creator/first caller
-        if (customAdmin == address(0) && _metadata[dao].updater == address(0)) {
-            return true;
-        }
-
         return false;
-
     }
 
     /**

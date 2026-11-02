@@ -88,7 +88,7 @@ dataSources:
     name: DAOMetadataRegistry
     network: liteforge
     source:
-      address: "0x351eE3234E6F0329d8cD88AEd89005899bfeA053"
+      address: "0x92621936C0E61E0371bFE2A5BC37f7569ca3e9a2"
       abi: DAOMetadataRegistry
       startBlock: 67045944
     mapping:

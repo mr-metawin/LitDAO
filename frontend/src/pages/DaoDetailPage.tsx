@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { useReadContract } from 'wagmi';
+import { useAccount, useReadContract } from 'wagmi';
 import { useQuery } from '@tanstack/react-query';
 import { formatUnits } from 'viem';
 import {
@@ -34,9 +34,22 @@ export const DaoDetailPage: React.FC = () => {
   const { governorAddress } = useParams<{ governorAddress: string }>();
   const governor = (governorAddress || CONTRACT_ADDRESSES.demoGovernor) as `0x${string}`;
 
+  const { address: userAddress } = useAccount();
+
   const [copied, setCopied] = useState(false);
   const [activeTab, setActiveTab] = useState<'proposals' | 'overview'>('proposals');
   const [isProposalModalOpen, setIsProposalModalOpen] = useState(false);
+
+  // Read DAO registration info from DAORegistry
+  const { data: daoRegistryData } = useReadContract({
+    address: CONTRACT_ADDRESSES.daoRegistry,
+    abi: ABIS.daoRegistry,
+    functionName: 'getDAOByGovernor',
+    args: [governor],
+  });
+  const registryDao = daoRegistryData as any;
+  const registrantAddress =
+    (registryDao?.registrant || registryDao?.[3] || (governor.toLowerCase() === CONTRACT_ADDRESSES.demoGovernor.toLowerCase() ? '0x7a0BD8E647e6fa7A8B23d1E926F4C0ef03332A01' : undefined)) as `0x${string}` | undefined;
 
   // Query Subgraph for DAO data, proposals, and tokens
   const { data: subgraphData, isLoading: isSubgraphLoading, refetch: refetchSubgraph } = useQuery({
@@ -59,9 +72,16 @@ export const DaoDetailPage: React.FC = () => {
 
   const [isImageModalOpen, setIsImageModalOpen] = useState(false);
   const [imgError, setImgError] = useState(false);
-  const { imageUrl, description: onChainDescription, refetch: refetchMetadata } = useDaoMetadata(
-    governor,
-    subgraphDao?.imageUri
+  const {
+    imageUrl,
+    description: onChainDescription,
+    isAuthorized,
+    refetch: refetchMetadata,
+  } = useDaoMetadata(governor, subgraphDao?.imageUri, userAddress);
+
+  const isCreatorOrAdmin = Boolean(
+    isAuthorized ||
+    (userAddress && registrantAddress && userAddress.toLowerCase() === registrantAddress.toLowerCase())
   );
 
   const { data: tokenAddressData } = useReadContract({
@@ -210,15 +230,17 @@ export const DaoDetailPage: React.FC = () => {
                   <Layers className="w-8 h-8 text-brand-400" />
                 )}
               </div>
-              <button
-                type="button"
-                onClick={() => setIsImageModalOpen(true)}
-                title="Update DAO Logo"
-                className="absolute inset-0 bg-slate-950/75 rounded-[14px] opacity-0 group-hover:opacity-100 transition flex flex-col items-center justify-center text-white text-[10px] font-semibold gap-0.5 cursor-pointer"
-              >
-                <Camera className="w-4 h-4 text-brand-400" />
-                <span>Change</span>
-              </button>
+              {isCreatorOrAdmin && (
+                <button
+                  type="button"
+                  onClick={() => setIsImageModalOpen(true)}
+                  title="Update DAO Logo (Creator Access)"
+                  className="absolute inset-0 bg-slate-950/75 rounded-[14px] opacity-0 group-hover:opacity-100 transition flex flex-col items-center justify-center text-white text-[10px] font-semibold gap-0.5 cursor-pointer"
+                >
+                  <Camera className="w-4 h-4 text-brand-400" />
+                  <span>Change</span>
+                </button>
+              )}
             </div>
 
             <div className="space-y-1.5">
@@ -244,6 +266,19 @@ export const DaoDetailPage: React.FC = () => {
                     {copied ? <Check className="w-3.5 h-3.5 text-brand-400" /> : <Copy className="w-3.5 h-3.5" />}
                   </button>
                 </span>
+                {registrantAddress && (
+                  <>
+                    <span>•</span>
+                    <span className="flex items-center gap-1.5 text-slate-400">
+                      <span>Creator: {registrantAddress.slice(0, 6)}...{registrantAddress.slice(-4)}</span>
+                      {isCreatorOrAdmin && (
+                        <span className="px-1.5 py-0.5 rounded text-[10px] font-semibold bg-emerald-500/15 text-emerald-400 border border-emerald-500/30">
+                          You (Admin)
+                        </span>
+                      )}
+                    </span>
+                  </>
+                )}
                 <span>•</span>
                 <a
                   href={`${litvm.blockExplorers.default.url}/address/${governor}`}
@@ -260,13 +295,23 @@ export const DaoDetailPage: React.FC = () => {
 
           {/* Action CTAs */}
           <div className="flex items-center gap-3">
-            <button
-              onClick={() => setIsImageModalOpen(true)}
-              className="inline-flex items-center gap-1.5 px-3.5 py-2.5 rounded-xl bg-slate-800/90 hover:bg-slate-700 text-slate-200 font-semibold text-xs transition border border-slate-700/80"
-            >
-              <Camera className="w-3.5 h-3.5 text-brand-400" />
-              <span>Update Logo</span>
-            </button>
+            {isCreatorOrAdmin ? (
+              <button
+                onClick={() => setIsImageModalOpen(true)}
+                className="inline-flex items-center gap-1.5 px-3.5 py-2.5 rounded-xl bg-slate-800/90 hover:bg-slate-700 text-slate-200 font-semibold text-xs transition border border-slate-700/80"
+              >
+                <Camera className="w-3.5 h-3.5 text-brand-400" />
+                <span>Update Logo</span>
+              </button>
+            ) : (
+              <div
+                className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-slate-900/60 text-slate-400 text-xs border border-slate-800"
+                title={registrantAddress ? `Metadata is protected. Only creator (${registrantAddress.slice(0, 6)}...${registrantAddress.slice(-4)}) or governance proposals can update it.` : 'Metadata is protected by governance.'}
+              >
+                <Shield className="w-3.5 h-3.5 text-slate-500" />
+                <span className="text-[11px] font-medium">Creator Protected</span>
+              </div>
+            )}
 
             <button
               onClick={() => setIsProposalModalOpen(true)}
@@ -406,6 +451,8 @@ export const DaoDetailPage: React.FC = () => {
         daoName={daoName}
         currentImageUri={imageUrl}
         currentDescription={onChainDescription || subgraphDao?.description}
+        isAuthorized={isCreatorOrAdmin}
+        registrantAddress={registrantAddress}
         onSuccess={() => {
           refetchMetadata();
           refetchSubgraph();

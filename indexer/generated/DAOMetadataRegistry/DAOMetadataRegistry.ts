@@ -10,6 +10,32 @@ import {
   BigInt,
 } from "@graphprotocol/graph-ts";
 
+export class DAOAdminTransferred extends ethereum.Event {
+  get params(): DAOAdminTransferred__Params {
+    return new DAOAdminTransferred__Params(this);
+  }
+}
+
+export class DAOAdminTransferred__Params {
+  _event: DAOAdminTransferred;
+
+  constructor(event: DAOAdminTransferred) {
+    this._event = event;
+  }
+
+  get dao(): Address {
+    return this._event.parameters[0].value.toAddress();
+  }
+
+  get oldAdmin(): Address {
+    return this._event.parameters[1].value.toAddress();
+  }
+
+  get newAdmin(): Address {
+    return this._event.parameters[2].value.toAddress();
+  }
+}
+
 export class DAOMetadataUpdated extends ethereum.Event {
   get params(): DAOMetadataUpdated__Params {
     return new DAOMetadataUpdated__Params(this);
@@ -61,6 +87,40 @@ export class DAOMetadataRegistry__getDAOMetadataResultValue0Struct extends ether
 export class DAOMetadataRegistry extends ethereum.SmartContract {
   static bind(address: Address): DAOMetadataRegistry {
     return new DAOMetadataRegistry("DAOMetadataRegistry", address);
+  }
+
+  daoAdmin(param0: Address): Address {
+    let result = super.call("daoAdmin", "daoAdmin(address):(address)", [
+      ethereum.Value.fromAddress(param0),
+    ]);
+
+    return result[0].toAddress();
+  }
+
+  try_daoAdmin(param0: Address): ethereum.CallResult<Address> {
+    let result = super.tryCall("daoAdmin", "daoAdmin(address):(address)", [
+      ethereum.Value.fromAddress(param0),
+    ]);
+    if (result.reverted) {
+      return new ethereum.CallResult();
+    }
+    let value = result.value;
+    return ethereum.CallResult.fromValue(value[0].toAddress());
+  }
+
+  daoRegistry(): Address {
+    let result = super.call("daoRegistry", "daoRegistry():(address)", []);
+
+    return result[0].toAddress();
+  }
+
+  try_daoRegistry(): ethereum.CallResult<Address> {
+    let result = super.tryCall("daoRegistry", "daoRegistry():(address)", []);
+    if (result.reverted) {
+      return new ethereum.CallResult();
+    }
+    let value = result.value;
+    return ethereum.CallResult.fromValue(value[0].toAddress());
   }
 
   getDAOImageUri(dao: Address): string {
@@ -118,6 +178,62 @@ export class DAOMetadataRegistry extends ethereum.SmartContract {
       ),
     );
   }
+
+  isAuthorized(dao: Address, account: Address): boolean {
+    let result = super.call(
+      "isAuthorized",
+      "isAuthorized(address,address):(bool)",
+      [ethereum.Value.fromAddress(dao), ethereum.Value.fromAddress(account)],
+    );
+
+    return result[0].toBoolean();
+  }
+
+  try_isAuthorized(
+    dao: Address,
+    account: Address,
+  ): ethereum.CallResult<boolean> {
+    let result = super.tryCall(
+      "isAuthorized",
+      "isAuthorized(address,address):(bool)",
+      [ethereum.Value.fromAddress(dao), ethereum.Value.fromAddress(account)],
+    );
+    if (result.reverted) {
+      return new ethereum.CallResult();
+    }
+    let value = result.value;
+    return ethereum.CallResult.fromValue(value[0].toBoolean());
+  }
+}
+
+export class ConstructorCall extends ethereum.Call {
+  get inputs(): ConstructorCall__Inputs {
+    return new ConstructorCall__Inputs(this);
+  }
+
+  get outputs(): ConstructorCall__Outputs {
+    return new ConstructorCall__Outputs(this);
+  }
+}
+
+export class ConstructorCall__Inputs {
+  _call: ConstructorCall;
+
+  constructor(call: ConstructorCall) {
+    this._call = call;
+  }
+
+  get registryAddress(): Address {
+    return this._call.inputValues[0].value.toAddress();
+  }
+}
+
+export class ConstructorCall__Outputs {
+  _call: ConstructorCall;
+
+  constructor(call: ConstructorCall) {
+    this._call = call;
+  }
 }
 
 export class SetDAOMetadataCall extends ethereum.Call {
@@ -154,6 +270,40 @@ export class SetDAOMetadataCall__Outputs {
   _call: SetDAOMetadataCall;
 
   constructor(call: SetDAOMetadataCall) {
+    this._call = call;
+  }
+}
+
+export class TransferDAOAdminCall extends ethereum.Call {
+  get inputs(): TransferDAOAdminCall__Inputs {
+    return new TransferDAOAdminCall__Inputs(this);
+  }
+
+  get outputs(): TransferDAOAdminCall__Outputs {
+    return new TransferDAOAdminCall__Outputs(this);
+  }
+}
+
+export class TransferDAOAdminCall__Inputs {
+  _call: TransferDAOAdminCall;
+
+  constructor(call: TransferDAOAdminCall) {
+    this._call = call;
+  }
+
+  get dao(): Address {
+    return this._call.inputValues[0].value.toAddress();
+  }
+
+  get newAdmin(): Address {
+    return this._call.inputValues[1].value.toAddress();
+  }
+}
+
+export class TransferDAOAdminCall__Outputs {
+  _call: TransferDAOAdminCall;
+
+  constructor(call: TransferDAOAdminCall) {
     this._call = call;
   }
 }

@@ -23,6 +23,8 @@ interface UpdateDaoImageModalProps {
   daoName: string;
   currentImageUri?: string | null;
   currentDescription?: string;
+  isAuthorized?: boolean;
+  registrantAddress?: string | null;
   onSuccess?: () => void;
 }
 
@@ -33,6 +35,8 @@ export const UpdateDaoImageModal: React.FC<UpdateDaoImageModalProps> = ({
   daoName,
   currentImageUri,
   currentDescription = '',
+  isAuthorized = true,
+  registrantAddress,
   onSuccess,
 }) => {
   const { isConnected, address } = useAccount();
@@ -92,6 +96,11 @@ export const UpdateDaoImageModal: React.FC<UpdateDaoImageModalProps> = ({
 
     if (!isConnected || !address) {
       if (openConnectModal) openConnectModal();
+      return;
+    }
+
+    if (!isAuthorized) {
+      setPinataError("You are not authorized to update this DAO's metadata. Only the original creator or governance proposals can update it.");
       return;
     }
 
@@ -190,6 +199,18 @@ export const UpdateDaoImageModal: React.FC<UpdateDaoImageModalProps> = ({
           </div>
         ) : (
           <form onSubmit={handleUploadAndSave} className="space-y-5">
+            {!isAuthorized && (
+              <div className="p-3 bg-amber-500/10 border border-amber-500/20 rounded-xl text-xs text-amber-300 flex items-start gap-2">
+                <AlertCircle className="w-4 h-4 shrink-0 mt-0.5 text-amber-400" />
+                <div className="space-y-0.5">
+                  <p className="font-semibold text-amber-200">Restricted: Creator Only</p>
+                  <p className="text-[11px] text-amber-300/80 leading-relaxed">
+                    Only the DAO creator{registrantAddress ? ` (${registrantAddress.slice(0, 6)}...${registrantAddress.slice(-4)})` : ''} or an approved governance proposal can update this DAO's logo and description.
+                  </p>
+                </div>
+              </div>
+            )}
+
             {/* Image Preview & Picker */}
             <div className="flex flex-col sm:flex-row items-center gap-5 p-4 bg-slate-900/60 rounded-2xl border border-slate-800/80">
               <div className="relative group w-24 h-24 rounded-2xl bg-slate-800 border-2 border-dashed border-slate-700 overflow-hidden flex items-center justify-center shrink-0">
@@ -202,13 +223,15 @@ export const UpdateDaoImageModal: React.FC<UpdateDaoImageModalProps> = ({
                 ) : (
                   <ImageIcon className="w-8 h-8 text-slate-500" />
                 )}
-                <button
-                  type="button"
-                  onClick={() => fileInputRef.current?.click()}
-                  className="absolute inset-0 bg-slate-950/60 opacity-0 group-hover:opacity-100 transition flex items-center justify-center text-white text-xs font-semibold"
-                >
-                  Change
-                </button>
+                {isAuthorized && (
+                  <button
+                    type="button"
+                    onClick={() => fileInputRef.current?.click()}
+                    className="absolute inset-0 bg-slate-950/60 opacity-0 group-hover:opacity-100 transition flex items-center justify-center text-white text-xs font-semibold"
+                  >
+                    Change
+                  </button>
+                )}
               </div>
 
               <div className="space-y-2 flex-1 text-center sm:text-left">
@@ -217,12 +240,14 @@ export const UpdateDaoImageModal: React.FC<UpdateDaoImageModalProps> = ({
                   type="file"
                   accept="image/*"
                   onChange={handleFileChange}
+                  disabled={!isAuthorized}
                   className="hidden"
                 />
                 <button
                   type="button"
                   onClick={() => fileInputRef.current?.click()}
-                  className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold border border-slate-700 transition"
+                  disabled={!isAuthorized || isWorking}
+                  className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 disabled:opacity-50 disabled:cursor-not-allowed text-slate-200 text-xs font-semibold border border-slate-700 transition"
                 >
                   <Upload className="w-3.5 h-3.5 text-brand-400" />
                   <span>Choose Image File</span>
@@ -270,10 +295,12 @@ export const UpdateDaoImageModal: React.FC<UpdateDaoImageModalProps> = ({
 
               <button
                 type="submit"
-                disabled={isWorking}
+                disabled={isWorking || !isAuthorized}
                 className="flex-1 py-2.5 rounded-xl bg-brand-600 hover:bg-brand-500 disabled:opacity-50 disabled:cursor-not-allowed text-slate-950 font-bold text-xs transition flex items-center justify-center gap-2 shadow-lg shadow-brand-500/10"
               >
-                {isUploadingPinata ? (
+                {!isAuthorized ? (
+                  <span>Unauthorized (Creator Only)</span>
+                ) : isUploadingPinata ? (
                   <>
                     <Loader2 className="w-3.5 h-3.5 animate-spin" />
                     <span>Pinning to IPFS via Pinata...</span>

@@ -2,8 +2,13 @@ import { useReadContract } from 'wagmi';
 import { CONTRACT_ADDRESSES, ABIS } from '../config/contracts';
 import { ipfsToGatewayUrl } from '../services/pinata';
 
-export function useDaoMetadata(daoAddress?: `0x${string}` | string | null, fallbackImageUri?: string | null) {
+export function useDaoMetadata(
+  daoAddress?: `0x${string}` | string | null,
+  fallbackImageUri?: string | null,
+  userAddress?: `0x${string}` | string | null
+) {
   const formattedDao = daoAddress as `0x${string}` | undefined;
+  const formattedUser = userAddress as `0x${string}` | undefined;
 
   const { data: onChainMetadata, refetch } = useReadContract({
     address: CONTRACT_ADDRESSES.daoMetadataRegistry,
@@ -12,6 +17,16 @@ export function useDaoMetadata(daoAddress?: `0x${string}` | string | null, fallb
     args: formattedDao ? [formattedDao] : undefined,
     query: {
       enabled: Boolean(formattedDao),
+    },
+  });
+
+  const { data: isAuthorizedData } = useReadContract({
+    address: CONTRACT_ADDRESSES.daoMetadataRegistry,
+    abi: ABIS.daoMetadataRegistry,
+    functionName: 'isAuthorized',
+    args: formattedDao && formattedUser ? [formattedDao, formattedUser] : undefined,
+    query: {
+      enabled: Boolean(formattedDao && formattedUser),
     },
   });
 
@@ -32,6 +47,8 @@ export function useDaoMetadata(daoAddress?: `0x${string}` | string | null, fallb
     description,
     updater: metadataTuple?.updater,
     updatedAt: metadataTuple?.updatedAt,
+    isAuthorized: Boolean(isAuthorizedData),
     refetch,
   };
 }
+
