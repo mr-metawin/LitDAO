@@ -19,6 +19,8 @@ export const FaucetCard: React.FC<FaucetCardProps> = ({
   const [remainingSeconds, setRemainingSeconds] = useState<number>(0);
   const [showAdminModal, setShowAdminModal] = useState<boolean>(false);
   const [depositAmount, setDepositAmount] = useState<string>('500');
+  const [editCooldownSecs, setEditCooldownSecs] = useState<string>('');
+  const [editClaimAmount, setEditClaimAmount] = useState<string>('');
 
   // Read Faucet Details
   const { data: modeData } = useReadContract({
@@ -35,17 +37,17 @@ export const FaucetCard: React.FC<FaucetCardProps> = ({
     query: { enabled: !!faucetAddress },
   });
 
-  const { data: cooldownData } = useReadContract({
+  const { data: cooldownData, refetch: refetchCooldown } = useReadContract({
     address: faucetAddress,
     abi: ABIS.daoFaucet,
     functionName: 'cooldownPeriod',
     query: { enabled: !!faucetAddress },
   });
 
-  const { data: pausedData } = useReadContract({
+  const { data: pausedData, refetch: refetchPaused } = useReadContract({
     address: faucetAddress,
     abi: ABIS.daoFaucet,
-    functionName: 'paused',
+    functionName: 'isPaused',
     query: { enabled: !!faucetAddress },
   });
 
@@ -75,9 +77,27 @@ export const FaucetCard: React.FC<FaucetCardProps> = ({
   });
 
   // Write: Claim Tokens
-  const { data: claimHash, writeContract: writeClaim, isPending: isClaimPending } = useWriteContract();
+  const { data: claimHash, writeContract: writeClaim, isPending: isClaimPending, error: claimError } = useWriteContract();
   const { isLoading: isClaimWaiting, isSuccess: isClaimSuccess } = useWaitForTransactionReceipt({
     hash: claimHash,
+  });
+
+  // Write: Admin Set Cooldown
+  const { data: cdHash, writeContract: writeCd, isPending: isCdPending } = useWriteContract();
+  const { isLoading: isCdWaiting, isSuccess: isCdSuccess } = useWaitForTransactionReceipt({
+    hash: cdHash,
+  });
+
+  // Write: Admin Set Claim Amount
+  const { data: amtHash, writeContract: writeAmt, isPending: isAmtPending } = useWriteContract();
+  const { isLoading: isAmtWaiting, isSuccess: isAmtSuccess } = useWaitForTransactionReceipt({
+    hash: amtHash,
+  });
+
+  // Write: Admin Toggle Pause
+  const { data: pauseHash, writeContract: writePause, isPending: isPausePending } = useWriteContract();
+  const { isLoading: isPauseWaiting, isSuccess: isPauseSuccess } = useWaitForTransactionReceipt({
+    hash: pauseHash,
   });
 
   // Write: Admin Deposit
@@ -109,7 +129,7 @@ export const FaucetCard: React.FC<FaucetCardProps> = ({
     return () => clearInterval(interval);
   }, [remainingSeconds, refetchCanClaim]);
 
-  // Refetch on claim success
+  // Refetch on claim or admin success
   useEffect(() => {
     if (isClaimSuccess) {
       refetchCanClaim();
@@ -117,6 +137,18 @@ export const FaucetCard: React.FC<FaucetCardProps> = ({
       refetchClaimAmount();
     }
   }, [isClaimSuccess, refetchCanClaim, refetchFaucetBalance, refetchClaimAmount]);
+
+  useEffect(() => {
+    if (isCdSuccess) refetchCooldown();
+  }, [isCdSuccess, refetchCooldown]);
+
+  useEffect(() => {
+    if (isAmtSuccess) refetchClaimAmount();
+  }, [isAmtSuccess, refetchClaimAmount]);
+
+  useEffect(() => {
+    if (isPauseSuccess) refetchPaused();
+  }, [isPauseSuccess, refetchPaused]);
 
   if (!faucetAddress || faucetAddress === '0x0000000000000000000000000000000000000000') {
     return (
@@ -132,7 +164,13 @@ export const FaucetCard: React.FC<FaucetCardProps> = ({
   const rawClaimAmount = claimAmountData ? BigInt(claimAmountData.toString()) : 0n;
   const formattedClaimAmount = Number(formatUnits(rawClaimAmount, 18)).toLocaleString();
   const cooldownSecs = cooldownData ? Number(cooldownData) : 0;
-  const cooldownHours = Math.round(cooldownSecs / 3600);
+
+  const formatCooldownDisplay = (secs: number) => {
+    if (secs === 0) return 'None (0s)';
+    if (secs < 60) return `${secs}s`;
+    if (secs < 3600) return `${Math.floor(secs / 60)} min (${secs}s)`;
+    return `${(secs / 3600).toFixed(1)} hrs (${secs}s)`;
+  };
 
   const [eligible] = canClaimData ? (canClaimData as [boolean, bigint]) : [false, 0n];
   const isAdmin = Boolean(address && adminData && (adminData as string).toLowerCase() === address.toLowerCase());
@@ -155,7 +193,36 @@ export const FaucetCard: React.FC<FaucetCardProps> = ({
     (writeClaim as any)({
       address: faucetAddress,
       abi: ABIS.daoFaucet,
-      functionName: 'claimTokens',
+      functionName: 'claim',
+    });
+  };
+
+  const handleUpdateCooldown = () => {
+    if (!editCooldownSecs || Number(editCooldownSecs) <= 0) return;
+    (writeCd as any)({
+      address: faucetAddress,
+      abi: ABIS.daoFaucet,
+      functionName: 'setCooldownPeriod',
+      args: [BigInt(editCooldownSecs)],
+    });
+  };
+
+  const handleUpdateClaimAmount = () => {
+    if (!editClaimAmount || Number(editClaimAmount) <= 0) return;
+    (writeAmt as any)({
+      address: faucetAddress,
+      abi: ABIS.daoFaucet,
+      functionName: 'setClaimAmount',
+      args: [parseUnits(editClaimAmount, 18)],
+    });
+  };
+
+  const handleTogglePause = () => {
+    (writePause as any)({
+      address: faucetAddress,
+      abi: ABIS.daoFaucet,
+      functionName: 'setPaused',
+      args: [!isPaused],
     });
   };
 
@@ -209,7 +276,7 @@ export const FaucetCard: React.FC<FaucetCardProps> = ({
             <span className="text-xs text-slate-400 block mb-0.5">Cooldown Period</span>
             <span className="text-xs font-semibold text-slate-300 font-mono flex items-center gap-1 justify-end">
               <Clock className="w-3.5 h-3.5 text-slate-400" />
-              {cooldownHours}h ({cooldownSecs}s)
+              {formatCooldownDisplay(cooldownSecs)}
             </span>
           </div>
         </div>
@@ -280,6 +347,12 @@ export const FaucetCard: React.FC<FaucetCardProps> = ({
           )}
         </button>
 
+        {claimError && (
+          <p className="text-xs text-rose-400 bg-rose-500/10 p-2.5 rounded-lg border border-rose-500/20">
+            Claim failed: {claimError.message.slice(0, 120)}
+          </p>
+        )}
+
         {/* Admin Section (Only visible to faucet admin) */}
         {isAdmin && (
           <div className="pt-2 border-t border-slate-800/80">
@@ -295,9 +368,80 @@ export const FaucetCard: React.FC<FaucetCardProps> = ({
             </button>
 
             {showAdminModal && (
-              <div className="mt-3 p-3 bg-slate-900/80 rounded-xl border border-slate-800 space-y-3">
-                {mode === 1 && (
+              <div className="mt-3 p-3 bg-slate-900/80 rounded-xl border border-slate-800 space-y-3.5">
+                {/* 1. Update Cooldown Period */}
+                <div>
+                  <label className="text-xs text-slate-300 block mb-1">
+                    Update Cooldown Period (seconds)
+                  </label>
+                  <div className="flex gap-2">
+                    <input
+                      type="number"
+                      placeholder={`Current: ${cooldownSecs}s`}
+                      value={editCooldownSecs}
+                      onChange={(e) => setEditCooldownSecs(e.target.value)}
+                      className="bg-slate-800 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-slate-200 flex-1 font-mono focus:outline-none focus:border-brand-500"
+                    />
+                    <button
+                      type="button"
+                      onClick={handleUpdateCooldown}
+                      disabled={isCdPending || isCdWaiting || !editCooldownSecs}
+                      className="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-brand-400 font-semibold text-xs transition border border-slate-700 disabled:opacity-50"
+                    >
+                      {isCdWaiting ? 'Updating...' : 'Set Cooldown'}
+                    </button>
+                  </div>
+                  {isCdSuccess && <span className="text-[11px] text-brand-400 mt-1 block">Cooldown updated!</span>}
+                </div>
+
+                {/* 2. Update Claim Amount */}
+                <div>
+                  <label className="text-xs text-slate-300 block mb-1">
+                    Update Claim Amount ({tokenSymbol})
+                  </label>
+                  <div className="flex gap-2">
+                    <input
+                      type="number"
+                      placeholder={`Current: ${formattedClaimAmount}`}
+                      value={editClaimAmount}
+                      onChange={(e) => setEditClaimAmount(e.target.value)}
+                      className="bg-slate-800 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-slate-200 flex-1 font-mono focus:outline-none focus:border-brand-500"
+                    />
+                    <button
+                      type="button"
+                      onClick={handleUpdateClaimAmount}
+                      disabled={isAmtPending || isAmtWaiting || !editClaimAmount}
+                      className="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-brand-400 font-semibold text-xs transition border border-slate-700 disabled:opacity-50"
+                    >
+                      {isAmtWaiting ? 'Updating...' : 'Set Amount'}
+                    </button>
+                  </div>
+                  {isAmtSuccess && <span className="text-[11px] text-brand-400 mt-1 block">Claim amount updated!</span>}
+                </div>
+
+                {/* 3. Pause / Resume Toggle */}
+                <div className="flex items-center justify-between pt-1 border-t border-slate-800">
                   <div>
+                    <span className="text-xs text-slate-300 block">Faucet Status</span>
+                    <span className="text-[11px] text-slate-500">{isPaused ? 'Currently Paused' : 'Currently Active'}</span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={handleTogglePause}
+                    disabled={isPausePending || isPauseWaiting}
+                    className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition border ${
+                      isPaused
+                        ? 'bg-emerald-600/20 text-emerald-300 border-emerald-500/40 hover:bg-emerald-600 hover:text-white'
+                        : 'bg-rose-600/20 text-rose-300 border-rose-500/40 hover:bg-rose-600 hover:text-white'
+                    }`}
+                  >
+                    {isPauseWaiting ? 'Processing...' : isPaused ? 'Resume Faucet' : 'Pause Faucet'}
+                  </button>
+                </div>
+
+                {/* 4. Top-up for pre-funded mode */}
+                {mode === 1 && (
+                  <div className="pt-1 border-t border-slate-800">
                     <label className="text-xs text-slate-400 block mb-1">
                       Top-up Faucet Pool ({tokenSymbol})
                     </label>
@@ -318,7 +462,8 @@ export const FaucetCard: React.FC<FaucetCardProps> = ({
                     </div>
                   </div>
                 )}
-                <div className="text-[11px] text-slate-500">
+
+                <div className="text-[11px] text-slate-500 pt-1 border-t border-slate-800">
                   Faucet Address: <span className="font-mono text-slate-400">{faucetAddress}</span>
                 </div>
               </div>

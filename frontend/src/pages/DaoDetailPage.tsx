@@ -89,13 +89,44 @@ export const DaoDetailPage: React.FC = () => {
   const { data: faucetAddressData } = useReadContract({
     address: CONTRACT_ADDRESSES.faucetFactory,
     abi: ABIS.faucetFactory,
-    functionName: 'getFaucet',
+    functionName: 'faucetByToken',
     args: [tokenAddress],
   });
-  const faucetAddress = (faucetAddressData as `0x${string}`) || CONTRACT_ADDRESSES.demoFaucet;
+
+  const faucetAddress =
+    faucetAddressData && faucetAddressData !== '0x0000000000000000000000000000000000000000'
+      ? (faucetAddressData as `0x${string}`)
+      : (governor.toLowerCase() === CONTRACT_ADDRESSES.demoGovernor.toLowerCase()
+          ? CONTRACT_ADDRESSES.demoFaucet
+          : undefined);
+
+  // Default known proposal for the live Demo DAO (in case subgraph is indexing or experiencing connect delay)
+  const DEMO_PROPOSAL_FALLBACK: ProposalRecord[] = [
+    {
+      id: `${CONTRACT_ADDRESSES.demoGovernor.toLowerCase()}-93311177256154683551789108490515870860146786192619853049945901443477999242955`,
+      proposalId: '93311177256154683551789108490515870860146786192619853049945901443477999242955',
+      governor: CONTRACT_ADDRESSES.demoGovernor,
+      proposer: '0x7a0BD8E647e6fa7A8B23d1E926F4C0ef03332A01',
+      targets: [CONTRACT_ADDRESSES.demoGovernor],
+      values: ['0'],
+      signatures: [''],
+      calldatas: ['0x'],
+      voteStart: '1793438654',
+      voteEnd: '1793442254',
+      description: "# Adopt the LitForge Alpha Community Charter\n\nLet's agree on a simple charter for LitForge Alpha DAO: our mission is to build and test governance tooling on LitVM, and our values are transparency, open participation, and learning by doing. Vote For to adopt it.",
+      state: 'Active',
+      forVotes: '1000000000000000000000000',
+      againstVotes: '0',
+      abstainVotes: '0',
+      quorum: '40000000000000000000000',
+      executed: false,
+      canceled: false,
+      createdAt: '1793438594',
+    },
+  ];
 
   // Query Subgraph for DAO proposals and detailed stats
-  const { data: subgraphDao, refetch: refetchSubgraph } = useQuery({
+  const { data: subgraphDao, isLoading: isSubgraphLoading, refetch: refetchSubgraph } = useQuery({
     queryKey: ['dao-detail', governor.toLowerCase()],
     queryFn: async () => {
       try {
@@ -115,7 +146,12 @@ export const DaoDetailPage: React.FC = () => {
   const tokenSymbol = (tokenSymbolData as string) || 'LFT';
   const tokenName = (tokenNameData as string) || 'LitForge Token';
 
-  const proposals: ProposalRecord[] = subgraphDao?.proposals || [];
+  const isDemoGovernor = governor.toLowerCase() === CONTRACT_ADDRESSES.demoGovernor.toLowerCase();
+  const rawProposals: ProposalRecord[] = subgraphDao?.proposals || [];
+  const proposals: ProposalRecord[] =
+    rawProposals.length > 0
+      ? rawProposals
+      : (isDemoGovernor ? DEMO_PROPOSAL_FALLBACK : []);
 
   const handleCopy = () => {
     navigator.clipboard.writeText(governor);
@@ -262,7 +298,13 @@ export const DaoDetailPage: React.FC = () => {
           </h2>
         </div>
 
-        {proposals.length === 0 ? (
+        {isSubgraphLoading && proposals.length === 0 ? (
+          <div className="space-y-4">
+            {[1, 2].map((i) => (
+              <div key={i} className="h-28 rounded-2xl bg-slate-900/60 border border-slate-800 animate-pulse" />
+            ))}
+          </div>
+        ) : proposals.length === 0 ? (
           <div className="bg-[#101726] border border-slate-800 rounded-2xl p-10 text-center space-y-3">
             <Vote className="w-10 h-10 text-slate-600 mx-auto" />
             <h3 className="font-bold text-white text-base">No Proposals Yet</h3>

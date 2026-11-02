@@ -162,9 +162,9 @@ export const CreateDaoPage: React.FC = () => {
       functionName: 'createFaucet',
       args: [
         token,
-        faucetMode,
         parseUnits(claimAmount || '100', 18),
         BigInt(cooldownPeriod || '3600'),
+        faucetMode,
       ],
     });
   };
