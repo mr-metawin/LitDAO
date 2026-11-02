@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useAccount, useReadContract, useWriteContract, useWaitForTransactionReceipt } from 'wagmi';
-import { isAddress, parseEther, encodeFunctionData } from 'viem';
+import { isAddress, parseEther, encodeFunctionData, formatUnits } from 'viem';
 import { X, Send, Loader2, AlertCircle, CheckCircle2 } from 'lucide-react';
 import { ABIS } from '../config/contracts';
 
@@ -112,7 +112,7 @@ export const CreateProposalModal: React.FC<CreateProposalModalProps> = ({
           <div className="mb-6 p-4 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-300 text-xs flex items-start gap-3">
             <AlertCircle className="w-5 h-5 text-amber-400 shrink-0 mt-0.5" />
             <div>
-              <strong>Insufficient Voting Power:</strong> You need at least {threshold.toString()} {tokenSymbol} voting power to propose. You currently have {userVotes.toString()} votes. Please activate or delegate voting power first.
+              <strong>Insufficient Voting Power:</strong> You need at least {formatUnits(threshold, 18)} {tokenSymbol} voting power to propose. You currently have {formatUnits(userVotes, 18)} votes. Please activate or delegate voting power first.
             </div>
           </div>
         )}

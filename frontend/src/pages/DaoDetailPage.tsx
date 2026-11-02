@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { useReadContract } from 'wagmi';
 import { useQuery } from '@tanstack/react-query';
+import { formatUnits } from 'viem';
 import {
   Shield,
   Layers,
@@ -272,7 +273,9 @@ export const DaoDetailPage: React.FC = () => {
               Proposal Threshold
             </span>
             <span className="text-xl font-bold text-white font-mono">
-              {proposalThresholdData ? `${proposalThresholdData.toString()} ${tokenSymbol}` : `0 ${tokenSymbol}`}
+              {proposalThresholdData
+                ? `${formatUnits(BigInt(proposalThresholdData.toString()), 18)} ${tokenSymbol}`
+                : `0 ${tokenSymbol}`}
             </span>
           </div>
         </div>
