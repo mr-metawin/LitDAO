@@ -16,6 +16,7 @@ import {
   Share2,
   Copy,
   Check,
+  Camera,
 } from 'lucide-react';
 import { ABIS, CONTRACT_ADDRESSES } from '../config/contracts';
 import { litvm } from '../config/chain';
@@ -23,8 +24,11 @@ import { DelegateCard } from '../components/DelegateCard';
 import { FaucetCard } from '../components/FaucetCard';
 import { ProposalCard } from '../components/ProposalCard';
 import { CreateProposalModal } from './CreateProposalModal';
+import { UpdateDaoImageModal } from '../components/UpdateDaoImageModal';
+import { useDaoMetadata } from '../hooks/useDaoMetadata';
 import { querySubgraph, GET_DAO_BY_ID_QUERY } from '../services/subgraph';
 import { ProposalRecord } from '../types';
+
 
 export const DaoDetailPage: React.FC = () => {
   const { governorAddress } = useParams<{ governorAddress: string }>();
@@ -34,13 +38,38 @@ export const DaoDetailPage: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'proposals' | 'overview'>('proposals');
   const [isProposalModalOpen, setIsProposalModalOpen] = useState(false);
 
-  // Read Token Address from Governor
+  // Query Subgraph for DAO data, proposals, and tokens
+  const { data: subgraphData, isLoading: isSubgraphLoading, refetch: refetchSubgraph } = useQuery({
+    queryKey: ['dao-detail', governor.toLowerCase()],
+    queryFn: async () => {
+      try {
+        const result = await querySubgraph<{ dao: any; tokens?: any[] }>(GET_DAO_BY_ID_QUERY, {
+          id: governor.toLowerCase(),
+        });
+        return result;
+      } catch (err) {
+        console.warn('Subgraph dao fetch failed:', err);
+        return null;
+      }
+    },
+    refetchInterval: 7000,
+  });
+
+  const subgraphDao = subgraphData?.dao;
+
+  const [isImageModalOpen, setIsImageModalOpen] = useState(false);
+  const [imgError, setImgError] = useState(false);
+  const { imageUrl, description: onChainDescription, refetch: refetchMetadata } = useDaoMetadata(
+    governor,
+    subgraphDao?.imageUri
+  );
+
   const { data: tokenAddressData } = useReadContract({
     address: governor,
     abi: ABIS.daoGovernor,
     functionName: 'token',
   });
-  const tokenAddress = (tokenAddressData as `0x${string}`) || CONTRACT_ADDRESSES.demoToken;
+  const tokenAddress = (tokenAddressData as `0x${string}`) || (subgraphDao?.token as `0x${string}`) || CONTRACT_ADDRESSES.demoToken;
 
   // Read Timelock Address from Governor
   const { data: timelockAddressData } = useReadContract({
@@ -48,7 +77,7 @@ export const DaoDetailPage: React.FC = () => {
     abi: ABIS.daoGovernor,
     functionName: 'timelock',
   });
-  const timelockAddress = (timelockAddressData as `0x${string}`) || CONTRACT_ADDRESSES.demoTimelock;
+  const timelockAddress = (timelockAddressData as `0x${string}`) || (subgraphDao?.timelock as `0x${string}`) || CONTRACT_ADDRESSES.demoTimelock;
 
   // Read Token Name & Symbol
   const { data: tokenNameData } = useReadContract({
@@ -126,28 +155,14 @@ export const DaoDetailPage: React.FC = () => {
     },
   ];
 
-  // Query Subgraph for DAO proposals and detailed stats
-  const { data: subgraphDao, isLoading: isSubgraphLoading, refetch: refetchSubgraph } = useQuery({
-    queryKey: ['dao-detail', governor.toLowerCase()],
-    queryFn: async () => {
-      try {
-        const result = await querySubgraph<{ dao: any }>(GET_DAO_BY_ID_QUERY, {
-          id: governor.toLowerCase(),
-        });
-        return result.dao;
-      } catch (err) {
-        console.warn('Subgraph dao fetch failed:', err);
-        return null;
-      }
-    },
-    refetchInterval: 7000,
-  });
-
-  const daoName = (governorNameData as string) || subgraphDao?.name || 'LitForge Alpha DAO';
-  const tokenSymbol = (tokenSymbolData as string) || 'LFT';
-  const tokenName = (tokenNameData as string) || 'LitForge Token';
-
   const isDemoGovernor = governor.toLowerCase() === CONTRACT_ADDRESSES.demoGovernor.toLowerCase();
+  const matchingToken = subgraphData?.tokens?.find(
+    (t: any) => t.id.toLowerCase() === (subgraphDao?.token?.toLowerCase() || tokenAddress?.toLowerCase())
+  );
+
+  const daoName = (governorNameData as string) || subgraphDao?.name || (isDemoGovernor ? 'LitForge Alpha DAO' : 'Community DAO');
+  const tokenSymbol = (tokenSymbolData as string) || matchingToken?.symbol || (isDemoGovernor ? 'LFT' : 'GOV');
+  const tokenName = (tokenNameData as string) || matchingToken?.name || (isDemoGovernor ? 'LitForge Token' : 'Governance Token');
   const rawProposals: ProposalRecord[] = subgraphDao?.proposals || [];
   const proposals: ProposalRecord[] =
     rawProposals.length > 0
@@ -182,13 +197,31 @@ export const DaoDetailPage: React.FC = () => {
       <div className="bg-[#101726] border border-slate-800 rounded-3xl p-6 sm:p-8 shadow-xl">
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
           <div className="flex items-start gap-4">
-            <div className="w-16 h-16 rounded-2xl bg-gradient-to-tr from-brand-600 to-brand-400 p-0.5 shadow-lg shadow-brand-500/20 shrink-0">
-              <div className="w-full h-full bg-slate-950 rounded-[14px] flex items-center justify-center">
-                <Layers className="w-8 h-8 text-brand-400" />
+            <div className="relative group w-16 h-16 rounded-2xl bg-gradient-to-tr from-brand-600 to-brand-400 p-0.5 shadow-lg shadow-brand-500/20 shrink-0">
+              <div className="w-full h-full bg-slate-950 rounded-[14px] overflow-hidden flex items-center justify-center">
+                {imageUrl && !imgError ? (
+                  <img
+                    src={imageUrl}
+                    alt={daoName}
+                    className="w-full h-full object-cover"
+                    onError={() => setImgError(true)}
+                  />
+                ) : (
+                  <Layers className="w-8 h-8 text-brand-400" />
+                )}
               </div>
+              <button
+                type="button"
+                onClick={() => setIsImageModalOpen(true)}
+                title="Update DAO Logo"
+                className="absolute inset-0 bg-slate-950/75 rounded-[14px] opacity-0 group-hover:opacity-100 transition flex flex-col items-center justify-center text-white text-[10px] font-semibold gap-0.5 cursor-pointer"
+              >
+                <Camera className="w-4 h-4 text-brand-400" />
+                <span>Change</span>
+              </button>
             </div>
 
-            <div className="space-y-1">
+            <div className="space-y-1.5">
               <div className="flex items-center gap-2.5 flex-wrap">
                 <h1 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">
                   {daoName}
@@ -197,6 +230,12 @@ export const DaoDetailPage: React.FC = () => {
                   {tokenSymbol}
                 </span>
               </div>
+
+              {(onChainDescription || subgraphDao?.description) && (
+                <p className="text-xs text-slate-300 max-w-xl line-clamp-2">
+                  {onChainDescription || subgraphDao?.description}
+                </p>
+              )}
 
               <div className="flex items-center gap-3 text-xs text-slate-400 font-mono flex-wrap">
                 <span className="flex items-center gap-1">
@@ -221,6 +260,14 @@ export const DaoDetailPage: React.FC = () => {
 
           {/* Action CTAs */}
           <div className="flex items-center gap-3">
+            <button
+              onClick={() => setIsImageModalOpen(true)}
+              className="inline-flex items-center gap-1.5 px-3.5 py-2.5 rounded-xl bg-slate-800/90 hover:bg-slate-700 text-slate-200 font-semibold text-xs transition border border-slate-700/80"
+            >
+              <Camera className="w-3.5 h-3.5 text-brand-400" />
+              <span>Update Logo</span>
+            </button>
+
             <button
               onClick={() => setIsProposalModalOpen(true)}
               className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-brand-600 hover:bg-brand-500 text-slate-950 font-bold text-sm transition shadow-md shadow-brand-500/10"
@@ -349,6 +396,20 @@ export const DaoDetailPage: React.FC = () => {
         governorAddress={governor}
         tokenAddress={tokenAddress}
         tokenSymbol={tokenSymbol}
+      />
+
+      {/* Update DAO Image / Metadata Modal */}
+      <UpdateDaoImageModal
+        isOpen={isImageModalOpen}
+        onClose={() => setIsImageModalOpen(false)}
+        governorAddress={governor}
+        daoName={daoName}
+        currentImageUri={imageUrl}
+        currentDescription={onChainDescription || subgraphDao?.description}
+        onSuccess={() => {
+          refetchMetadata();
+          refetchSubgraph();
+        }}
       />
     </div>
   );

@@ -9,6 +9,10 @@ export async function querySubgraph<T>(query: string, variables: Record<string, 
     body: JSON.stringify({ query, variables }),
   });
 
+  if (!response.ok) {
+    throw new Error(`Subgraph HTTP error ${response.status}: ${response.statusText}`);
+  }
+
   const json = await response.json();
   if (json.errors) {
     throw new Error(json.errors[0]?.message || 'GraphQL query error');
@@ -25,11 +29,18 @@ export const GET_ALL_DAOS_QUERY = `
       timelock
       registrant
       name
+      imageUri
+      description
       createdAt
       createdBlock
       proposalCount
       voterCount
       holderCount
+    }
+    tokens {
+      id
+      name
+      symbol
     }
   }
 `;
@@ -43,11 +54,14 @@ export const GET_DAO_BY_ID_QUERY = `
       timelock
       registrant
       name
+      imageUri
+      description
       createdAt
       createdBlock
       proposalCount
       voterCount
       holderCount
+
       proposals(orderBy: createdAt, orderDirection: desc) {
         id
         proposalId
@@ -67,6 +81,11 @@ export const GET_DAO_BY_ID_QUERY = `
         executedAt
         canceledAt
       }
+    }
+    tokens {
+      id
+      name
+      symbol
     }
   }
 `;

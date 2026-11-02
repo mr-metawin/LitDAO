@@ -6,9 +6,11 @@ import daoTokenAbi from '../abis/DAOToken.json';
 import daoGovernorAbi from '../abis/DAOGovernor.json';
 import daoFaucetAbi from '../abis/DAOFaucet.json';
 import timelockAbi from '../abis/TimelockController.json';
+import daoMetadataRegistryAbi from '../abis/DAOMetadataRegistry.json';
 
 export const CONTRACT_ADDRESSES = {
   daoRegistry: '0xfF8c3453f5617C0483e3D2f38F70126772D6F247' as `0x${string}`,
+  daoMetadataRegistry: '0x351eE3234E6F0329d8cD88AEd89005899bfeA053' as `0x${string}`,
   tokenFactory: '0x9b3E75Df9bBBCD2b60645ecb473d838f3eAa5dea' as `0x${string}`,
   governorDeployer: '0xA2913242e845D883df43676C0e253D9eDc0605B2' as `0x${string}`,
   governorFactory: '0xfE6e5f87AA0be25c73BeF342217F2b170C9e38a2' as `0x${string}`,
@@ -21,6 +23,7 @@ export const CONTRACT_ADDRESSES = {
 
 export const ABIS = {
   daoRegistry: daoRegistryAbi,
+  daoMetadataRegistry: daoMetadataRegistryAbi,
   tokenFactory: tokenFactoryAbi,
   governorFactory: governorFactoryAbi,
   faucetFactory: faucetFactoryAbi,
@@ -29,3 +32,4 @@ export const ABIS = {
   daoFaucet: daoFaucetAbi,
   timelock: timelockAbi,
 };
+

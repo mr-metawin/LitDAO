@@ -116,6 +116,40 @@ export class DAO extends Entity {
     this.set("name", Value.fromString(value));
   }
 
+  get imageUri(): string | null {
+    let value = this.get("imageUri");
+    if (!value || value.kind == ValueKind.NULL) {
+      return null;
+    } else {
+      return value.toString();
+    }
+  }
+
+  set imageUri(value: string | null) {
+    if (!value) {
+      this.unset("imageUri");
+    } else {
+      this.set("imageUri", Value.fromString(<string>value));
+    }
+  }
+
+  get description(): string | null {
+    let value = this.get("description");
+    if (!value || value.kind == ValueKind.NULL) {
+      return null;
+    } else {
+      return value.toString();
+    }
+  }
+
+  set description(value: string | null) {
+    if (!value) {
+      this.unset("description");
+    } else {
+      this.set("description", Value.fromString(<string>value));
+    }
+  }
+
   get createdAt(): BigInt {
     let value = this.get("createdAt");
     if (!value || value.kind == ValueKind.NULL) {

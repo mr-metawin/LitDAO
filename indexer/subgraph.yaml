@@ -8,7 +8,7 @@ dataSources:
     source:
       address: "0xfF8c3453f5617C0483e3D2f38F70126772D6F247"
       abi: DAORegistry
-      startBlock: 66130950
+      startBlock: 67045944
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.7
@@ -31,7 +31,7 @@ dataSources:
     source:
       address: "0x9b3E75Df9bBBCD2b60645ecb473d838f3eAa5dea"
       abi: TokenFactory
-      startBlock: 66130950
+      startBlock: 67045944
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.7
@@ -52,7 +52,7 @@ dataSources:
     source:
       address: "0xfE6e5f87AA0be25c73BeF342217F2b170C9e38a2"
       abi: GovernorFactory
-      startBlock: 66130950
+      startBlock: 67045944
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.7
@@ -73,7 +73,7 @@ dataSources:
     source:
       address: "0x01aD919d404Cd4a67F990499753fEBB78d21ED6b"
       abi: FaucetFactory
-      startBlock: 66130950
+      startBlock: 67045944
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.7
@@ -87,6 +87,27 @@ dataSources:
         - event: FaucetCreated(indexed address,indexed address,indexed address,uint8)
           handler: handleFaucetCreated
       file: ./src/faucetFactory.ts
+
+  - kind: ethereum/contract
+    name: DAOMetadataRegistry
+    network: liteforge
+    source:
+      address: "0x351eE3234E6F0329d8cD88AEd89005899bfeA053"
+      abi: DAOMetadataRegistry
+      startBlock: 67045944
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.7
+      language: wasm/assemblyscript
+      entities:
+        - DAO
+      abis:
+        - name: DAOMetadataRegistry
+          file: ./abis/DAOMetadataRegistry.json
+      eventHandlers:
+        - event: DAOMetadataUpdated(indexed address,string,string,indexed address)
+          handler: handleDAOMetadataUpdated
+      file: ./src/metadata.ts
 
 templates:
   - kind: ethereum/contract

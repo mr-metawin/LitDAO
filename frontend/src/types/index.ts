@@ -11,6 +11,8 @@ export interface DAORecord {
   timelock: string;
   creator: string;
   name: string;
+  imageUri?: string;
+  description?: string;
   faucet?: {
     id: string;
     mode: number; // 0 = MINT, 1 = PRE_FUNDED

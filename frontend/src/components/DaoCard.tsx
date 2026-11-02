@@ -2,12 +2,16 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowUpRight, Vote, Users, Coins, Layers } from 'lucide-react';
 import { DAORecord } from '../types';
+import { useDaoMetadata } from '../hooks/useDaoMetadata';
 
 interface DaoCardProps {
   dao: DAORecord;
 }
 
 export const DaoCard: React.FC<DaoCardProps> = ({ dao }) => {
+  const [imgError, setImgError] = React.useState(false);
+  const { imageUrl } = useDaoMetadata(dao.governor as `0x${string}`, dao.imageUri);
+
   const tokenSymbol = typeof dao.token === 'object' && dao.token?.symbol 
     ? dao.token.symbol 
     : 'TOKEN';
@@ -18,8 +22,17 @@ export const DaoCard: React.FC<DaoCardProps> = ({ dao }) => {
         {/* Top bar: Network Badge & Icon */}
         <div className="flex items-center justify-between gap-2 mb-4">
           <div className="flex items-center gap-2">
-            <div className="w-10 h-10 rounded-xl bg-slate-800/90 border border-slate-700/60 flex items-center justify-center text-brand-400 group-hover:border-brand-500/50 group-hover:scale-105 transition">
-              <Layers className="w-5 h-5 text-brand-400" />
+            <div className="w-10 h-10 rounded-xl bg-slate-800/90 border border-slate-700/60 overflow-hidden flex items-center justify-center text-brand-400 group-hover:border-brand-500/50 group-hover:scale-105 transition shrink-0">
+              {imageUrl && !imgError ? (
+                <img
+                  src={imageUrl}
+                  alt={dao.name}
+                  className="w-full h-full object-cover"
+                  onError={() => setImgError(true)}
+                />
+              ) : (
+                <Layers className="w-5 h-5 text-brand-400" />
+              )}
             </div>
             <div>
               <h3 className="font-bold text-lg text-white group-hover:text-brand-300 transition tracking-tight line-clamp-1">
@@ -30,6 +43,7 @@ export const DaoCard: React.FC<DaoCardProps> = ({ dao }) => {
               </p>
             </div>
           </div>
+
 
           {/* Network Badge - Explicitly LitVM */}
           <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold bg-brand-500/10 text-brand-400 border border-brand-500/20 shrink-0">

@@ -5,6 +5,8 @@ type DAO @entity(immutable: false) {
   timelock: Bytes!
   registrant: Bytes!
   name: String!
+  imageUri: String
+  description: String
   createdAt: BigInt!
   createdBlock: BigInt!
   proposalCount: BigInt!

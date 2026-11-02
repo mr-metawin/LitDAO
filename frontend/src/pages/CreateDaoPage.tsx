@@ -15,8 +15,12 @@ import {
   Coins,
   AlertCircle,
   Wallet,
+  Camera,
+  Upload,
 } from 'lucide-react';
 import { CONTRACT_ADDRESSES, ABIS } from '../config/contracts';
+import { uploadImageToPinata } from '../services/pinata';
+
 
 export const CreateDaoPage: React.FC = () => {
   const navigate = useNavigate();
@@ -35,11 +39,18 @@ export const CreateDaoPage: React.FC = () => {
 
   // Step 2: Governor Parameters
   const [daoName, setDaoName] = useState('My Community DAO');
+  const [daoImageFile, setDaoImageFile] = useState<File | null>(null);
+  const [daoImagePreview, setDaoImagePreview] = useState<string | null>(null);
+  const [daoImageUri, setDaoImageUri] = useState<string | null>(null);
+  const [daoDescription, setDaoDescription] = useState<string>('');
+  const [isPinningImage, setIsPinningImage] = useState(false);
+  const [pinningError, setPinningError] = useState<string | null>(null);
   const [votingDelay, setVotingDelay] = useState('5'); // 5 seconds
   const [votingPeriodDays, setVotingPeriodDays] = useState('3'); // 3 days default
   const [proposalThreshold, setProposalThreshold] = useState('100'); // 100 tokens
   const [quorumFraction, setQuorumFraction] = useState('4'); // 4%
   const [timelockDelay, setTimelockDelay] = useState('60'); // 60 seconds
+
 
   // Step 3: Faucet Configuration
   const [enableFaucet, setEnableFaucet] = useState(true);
@@ -70,6 +81,10 @@ export const CreateDaoPage: React.FC = () => {
   const { isLoading: isFaucetWaiting, isSuccess: isFaucetSuccess, data: faucetReceipt, error: faucetReceiptError } = useWaitForTransactionReceipt({
     hash: faucetTxHash,
   });
+
+  // 4. Set Metadata
+  const { writeContract: writeMetadata } = useWriteContract();
+
 
   // Error Helper
   const getErrorMessage = (err: any) => {
@@ -130,6 +145,21 @@ export const CreateDaoPage: React.FC = () => {
             const gov = (decoded.args as any).governor;
             setDeployedGovernorAddr(gov);
             setFormError(null);
+
+            // Auto-register metadata on LitVM if image or description was provided
+            if (daoImageUri || daoDescription.trim()) {
+              try {
+                (writeMetadata as any)({
+                  address: CONTRACT_ADDRESSES.daoMetadataRegistry,
+                  abi: ABIS.daoMetadataRegistry,
+                  functionName: 'setDAOMetadata',
+                  args: [gov, daoImageUri || '', daoDescription.trim()],
+                });
+              } catch (metaErr) {
+                console.warn('Metadata registration error:', metaErr);
+              }
+            }
+
             if (enableFaucet) {
               setCurrentStep(3);
             } else {
@@ -142,7 +172,37 @@ export const CreateDaoPage: React.FC = () => {
         }
       }
     }
-  }, [govReceipt, enableFaucet, navigate]);
+  }, [govReceipt, enableFaucet, navigate, daoImageUri, daoDescription, writeMetadata]);
+
+  // Handle Image Upload & Pinning to Pinata IPFS
+  const handleImageSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith('image/')) {
+      setPinningError('Please choose a valid image file (PNG, JPG, SVG, WebP)');
+      return;
+    }
+    if (file.size > 10 * 1024 * 1024) {
+      setPinningError('Image size exceeds 10MB limit');
+      return;
+    }
+
+    setDaoImageFile(file);
+    setPinningError(null);
+    setDaoImagePreview(URL.createObjectURL(file));
+
+    try {
+      setIsPinningImage(true);
+      const res = await uploadImageToPinata(file, { daoName: daoName.trim() || 'DAO' });
+      setDaoImageUri(res.ipfsUri);
+    } catch (err: any) {
+      console.error('Failed to pin to Pinata IPFS:', err);
+      setPinningError(err?.message || 'Failed to pin image to Pinata IPFS');
+    } finally {
+      setIsPinningImage(false);
+    }
+  };
 
   // Redirect after faucet creation is confirmed
   React.useEffect(() => {
@@ -150,6 +210,7 @@ export const CreateDaoPage: React.FC = () => {
       navigate(`/dao/${deployedGovernorAddr}`);
     }
   }, [isFaucetSuccess, deployedGovernorAddr, navigate]);
+
 
   const handleCreateToken = (e: React.FormEvent) => {
     e.preventDefault();
@@ -498,6 +559,65 @@ export const CreateDaoPage: React.FC = () => {
                 className="w-full bg-slate-900 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-slate-100 focus:outline-none focus:border-brand-500"
               />
             </div>
+
+            {/* DAO Avatar & Description */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label className="text-xs font-medium text-slate-300 block mb-1">
+                  DAO Avatar / Logo (Optional)
+                </label>
+                <div className="flex items-center gap-3">
+                  <div className="w-12 h-12 rounded-xl bg-slate-900 border border-slate-800 overflow-hidden flex items-center justify-center shrink-0">
+                    {daoImagePreview ? (
+                      <img src={daoImagePreview} alt="DAO Preview" className="w-full h-full object-cover" />
+                    ) : (
+                      <Camera className="w-5 h-5 text-slate-600" />
+                    )}
+                  </div>
+                  <div className="flex-1 space-y-1">
+                    <label className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-slate-300 text-xs font-semibold border border-slate-800 cursor-pointer transition">
+                      <Upload className="w-3.5 h-3.5 text-brand-400" />
+                      <span>{daoImagePreview ? 'Change Image' : 'Upload Image'}</span>
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={handleImageSelect}
+                        className="hidden"
+                      />
+                    </label>
+                    {isPinningImage && (
+                      <p className="text-[11px] text-brand-400 flex items-center gap-1">
+                        <Loader2 className="w-3 h-3 animate-spin" />
+                        <span>Pinning to IPFS via Pinata...</span>
+                      </p>
+                    )}
+                    {daoImageUri && !isPinningImage && (
+                      <p className="text-[11px] text-emerald-400 flex items-center gap-1">
+                        <CheckCircle2 className="w-3 h-3" />
+                        <span>Pinned to Pinata IPFS</span>
+                      </p>
+                    )}
+                    {pinningError && (
+                      <p className="text-[11px] text-rose-400">{pinningError}</p>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              <div>
+                <label className="text-xs font-medium text-slate-300 block mb-1">
+                  DAO Description (Optional)
+                </label>
+                <input
+                  type="text"
+                  placeholder="e.g. Protocol governance & community treasury"
+                  value={daoDescription}
+                  onChange={(e) => setDaoDescription(e.target.value)}
+                  className="w-full bg-slate-900 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-slate-100 placeholder:text-slate-600 focus:outline-none focus:border-brand-500"
+                />
+              </div>
+            </div>
+
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>

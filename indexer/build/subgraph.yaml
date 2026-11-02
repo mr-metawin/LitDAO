@@ -84,6 +84,26 @@ dataSources:
         - event: FaucetCreated(indexed address,indexed address,indexed address,uint8)
           handler: handleFaucetCreated
       file: FaucetFactory/FaucetFactory.wasm
+  - kind: ethereum/contract
+    name: DAOMetadataRegistry
+    network: liteforge
+    source:
+      address: "0x351eE3234E6F0329d8cD88AEd89005899bfeA053"
+      abi: DAOMetadataRegistry
+      startBlock: 67043100
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.7
+      language: wasm/assemblyscript
+      entities:
+        - DAO
+      abis:
+        - name: DAOMetadataRegistry
+          file: DAOMetadataRegistry/DAOMetadataRegistry.json
+      eventHandlers:
+        - event: DAOMetadataUpdated(indexed address,string,string,indexed address)
+          handler: handleDAOMetadataUpdated
+      file: DAOMetadataRegistry/DAOMetadataRegistry.wasm
 templates:
   - kind: ethereum/contract
     name: GovernorTemplate

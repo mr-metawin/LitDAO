@@ -16,24 +16,34 @@ export const ExplorePage: React.FC = () => {
     queryKey: ['explore-daos'],
     queryFn: async () => {
       try {
-        const result = await querySubgraph<{ daos: any[] }>(GET_ALL_DAOS_QUERY);
+        const result = await querySubgraph<{ daos: any[]; tokens?: any[] }>(GET_ALL_DAOS_QUERY);
         if (result?.daos && result.daos.length > 0) {
-          return result.daos.map((dao) => ({
-            id: dao.id,
-            governor: dao.governor,
-            token: {
-              id: dao.token,
-              name: 'LitForge Token',
-              symbol: 'LFT',
-              decimals: 18,
-            },
-            timelock: dao.timelock,
-            creator: dao.registrant,
-            name: dao.name,
-            proposalCount: Number(dao.proposalCount || 0),
-            voterCount: Number(dao.voterCount || 0),
-            holderCount: Number(dao.holderCount || 0),
-          })) as DAORecord[];
+          const tokenMap = new Map<string, { name: string; symbol: string }>();
+          if (result.tokens) {
+            for (const t of result.tokens) {
+              tokenMap.set(t.id.toLowerCase(), { name: t.name, symbol: t.symbol });
+            }
+          }
+
+          return result.daos.map((dao) => {
+            const tokenInfo = tokenMap.get(dao.token.toLowerCase());
+            return {
+              id: dao.id,
+              governor: dao.governor,
+              token: {
+                id: dao.token,
+                name: tokenInfo?.name || 'Governance Token',
+                symbol: tokenInfo?.symbol || 'GOV',
+                decimals: 18,
+              },
+              timelock: dao.timelock,
+              creator: dao.registrant,
+              name: dao.name,
+              proposalCount: Number(dao.proposalCount || 0),
+              voterCount: Number(dao.voterCount || 0),
+              holderCount: Number(dao.holderCount || 0),
+            } as DAORecord;
+          });
         }
       } catch (e) {
         console.warn('Subgraph fetch failed, falling back to deployed contracts:', e);
