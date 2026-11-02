@@ -258,7 +258,11 @@ export const DaoDetailPage: React.FC = () => {
               Voting Period
             </span>
             <span className="text-xl font-bold text-white font-mono">
-              {votingPeriodData ? `${votingPeriodData.toString()}s` : '300s'}
+              {votingPeriodData
+                ? Number(votingPeriodData) >= 86400
+                  ? `${(Number(votingPeriodData) / 86400).toFixed(1).replace(/\.0$/, '')}d`
+                  : `${votingPeriodData.toString()}s`
+                : '3d'}
             </span>
           </div>
 

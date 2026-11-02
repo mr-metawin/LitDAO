@@ -36,7 +36,7 @@ export const CreateDaoPage: React.FC = () => {
   // Step 2: Governor Parameters
   const [daoName, setDaoName] = useState('My Community DAO');
   const [votingDelay, setVotingDelay] = useState('5'); // 5 seconds
-  const [votingPeriod, setVotingPeriod] = useState('300'); // 5 minutes
+  const [votingPeriodDays, setVotingPeriodDays] = useState('3'); // 3 days default
   const [proposalThreshold, setProposalThreshold] = useState('100'); // 100 tokens
   const [quorumFraction, setQuorumFraction] = useState('4'); // 4%
   const [timelockDelay, setTimelockDelay] = useState('60'); // 60 seconds
@@ -209,11 +209,12 @@ export const CreateDaoPage: React.FC = () => {
 
     try {
       const name = daoName.trim() || `${tokenName} DAO`;
+      const periodInSeconds = Math.max(1, Math.round(Number(votingPeriodDays || '3') * 86400));
       const params = {
         name: name,
         token: token,
         votingDelay: BigInt(votingDelay || '5'),
-        votingPeriod: BigInt(votingPeriod || '300'),
+        votingPeriod: BigInt(periodInSeconds),
         proposalThreshold: parseUnits(proposalThreshold || '0', 18),
         quorumFraction: BigInt(quorumFraction || '4'),
         timelockMinDelay: BigInt(timelockDelay || '60'),
@@ -513,14 +514,24 @@ export const CreateDaoPage: React.FC = () => {
               </div>
 
               <div>
-                <label className="text-xs font-medium text-slate-300 block mb-1">
-                  Voting Period (seconds voting remains active)
-                </label>
+                <div className="flex items-center justify-between mb-1">
+                  <label className="text-xs font-medium text-slate-300">
+                    Voting Period (days voting remains active)
+                  </label>
+                  {Number(votingPeriodDays) > 0 && (
+                    <span className="text-[10px] text-slate-500 font-mono">
+                      ≈ {(Math.round(Number(votingPeriodDays) * 86400)).toLocaleString()}s
+                    </span>
+                  )}
+                </div>
                 <input
                   type="number"
-                  value={votingPeriod}
-                  onChange={(e) => setVotingPeriod(e.target.value)}
+                  step="any"
+                  min="0.001"
+                  value={votingPeriodDays}
+                  onChange={(e) => setVotingPeriodDays(e.target.value)}
                   required
+                  placeholder="3"
                   className="w-full bg-slate-900 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-slate-100 font-mono focus:outline-none focus:border-brand-500"
                 />
               </div>
