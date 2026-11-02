@@ -1,8 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { useAccount, useReadContract, useWriteContract, useWaitForTransactionReceipt } from 'wagmi';
+import { useAccount, useReadContract, useWriteContract, useWaitForTransactionReceipt, usePublicClient } from 'wagmi';
 import { formatUnits, parseUnits } from 'viem';
-import { Droplets, Clock, Loader2, Sparkles, CheckCircle2, AlertCircle, Settings } from 'lucide-react';
+import { Droplets, Clock, Loader2, Sparkles, CheckCircle2, AlertCircle, Settings, KeyRound } from 'lucide-react';
 import { ABIS } from '../config/contracts';
+import { getSafeGasFees } from '../config/chain';
+
+const MINTER_ROLE = '0x9f2df0fed2c77648de5860a4cc508cd0818c85b8b8a1ab4ceeef8d981c8956a6' as `0x${string}`;
+const DEFAULT_ADMIN_ROLE = '0x0000000000000000000000000000000000000000000000000000000000000000' as `0x${string}`;
 
 interface FaucetCardProps {
   faucetAddress?: `0x${string}`;
@@ -16,6 +20,7 @@ export const FaucetCard: React.FC<FaucetCardProps> = ({
   tokenSymbol,
 }) => {
   const { address, isConnected } = useAccount();
+  const publicClient = usePublicClient();
   const [remainingSeconds, setRemainingSeconds] = useState<number>(0);
   const [showAdminModal, setShowAdminModal] = useState<boolean>(false);
   const [depositAmount, setDepositAmount] = useState<string>('500');
@@ -74,6 +79,37 @@ export const FaucetCard: React.FC<FaucetCardProps> = ({
     functionName: 'balanceOf',
     args: faucetAddress ? [faucetAddress] : undefined,
     query: { enabled: !!faucetAddress },
+  });
+
+  // Check if faucet holds MINTER_ROLE on the token (required for Mint mode)
+  const { data: hasMinterRoleData, refetch: refetchMinterRole } = useReadContract({
+    address: tokenAddress,
+    abi: ABIS.daoToken,
+    functionName: 'hasRole',
+    args: faucetAddress ? [MINTER_ROLE, faucetAddress] : undefined,
+    query: { enabled: !!faucetAddress && !!tokenAddress },
+  });
+  const hasMinterRole = Boolean(hasMinterRoleData);
+
+  // Check if connected wallet is token admin (can grant roles)
+  const { data: isTokenAdminData } = useReadContract({
+    address: tokenAddress,
+    abi: ABIS.daoToken,
+    functionName: 'hasRole',
+    args: address ? [DEFAULT_ADMIN_ROLE, address] : undefined,
+    query: { enabled: !!address && !!tokenAddress },
+  });
+  const isTokenAdmin = Boolean(isTokenAdminData);
+
+  // Write: Grant MINTER_ROLE to Faucet
+  const {
+    data: grantHash,
+    writeContract: writeGrantRole,
+    isPending: isGrantPending,
+    error: grantError,
+  } = useWriteContract();
+  const { isLoading: isGrantWaiting, isSuccess: isGrantSuccess } = useWaitForTransactionReceipt({
+    hash: grantHash,
   });
 
   // Write: Claim Tokens
@@ -150,6 +186,13 @@ export const FaucetCard: React.FC<FaucetCardProps> = ({
     if (isPauseSuccess) refetchPaused();
   }, [isPauseSuccess, refetchPaused]);
 
+  useEffect(() => {
+    if (isGrantSuccess) {
+      refetchMinterRole();
+      refetchCanClaim();
+    }
+  }, [isGrantSuccess, refetchMinterRole, refetchCanClaim]);
+
   if (!faucetAddress || faucetAddress === '0x0000000000000000000000000000000000000000') {
     return (
       <div className="bg-[#101726] border border-slate-800 rounded-2xl p-6 shadow-md text-slate-400 text-sm text-center">
@@ -178,6 +221,11 @@ export const FaucetCard: React.FC<FaucetCardProps> = ({
   const rawFaucetBalance = faucetBalanceData ? BigInt(faucetBalanceData.toString()) : 0n;
   const formattedFaucetBalance = Number(formatUnits(rawFaucetBalance, 18)).toLocaleString();
 
+  const isMintMode = mode === 0;
+  const isPreFundedMode = mode === 1;
+  const isMissingMinterRole = isMintMode && !hasMinterRole;
+  const isUnderfunded = isPreFundedMode && rawFaucetBalance < rawClaimAmount;
+
   // Format remaining cooldown timer mm:ss or hh:mm:ss
   const formatTime = (secs: number) => {
     const hours = Math.floor(secs / 3600);
@@ -189,52 +237,100 @@ export const FaucetCard: React.FC<FaucetCardProps> = ({
     return `${minutes}m ${seconds}s`;
   };
 
-  const handleClaim = () => {
-    (writeClaim as any)({
-      address: faucetAddress,
-      abi: ABIS.daoFaucet,
-      functionName: 'claim',
-    });
+  const handleGrantMinterRole = async () => {
+    if (!faucetAddress) return;
+    try {
+      const feeOverrides = await getSafeGasFees(publicClient);
+      (writeGrantRole as any)({
+        address: tokenAddress,
+        abi: ABIS.daoToken,
+        functionName: 'grantRole',
+        args: [MINTER_ROLE, faucetAddress],
+        ...feeOverrides,
+      });
+    } catch (err) {
+      console.error('Failed to grant minter role:', err);
+    }
   };
 
-  const handleUpdateCooldown = () => {
-    if (!editCooldownSecs || Number(editCooldownSecs) <= 0) return;
-    (writeCd as any)({
-      address: faucetAddress,
-      abi: ABIS.daoFaucet,
-      functionName: 'setCooldownPeriod',
-      args: [BigInt(editCooldownSecs)],
-    });
+  const handleClaim = async () => {
+    if (!faucetAddress) return;
+    try {
+      const feeOverrides = await getSafeGasFees(publicClient);
+      (writeClaim as any)({
+        address: faucetAddress,
+        abi: ABIS.daoFaucet,
+        functionName: 'claim',
+        ...feeOverrides,
+      });
+    } catch (err) {
+      console.error('Failed to claim tokens:', err);
+    }
   };
 
-  const handleUpdateClaimAmount = () => {
-    if (!editClaimAmount || Number(editClaimAmount) <= 0) return;
-    (writeAmt as any)({
-      address: faucetAddress,
-      abi: ABIS.daoFaucet,
-      functionName: 'setClaimAmount',
-      args: [parseUnits(editClaimAmount, 18)],
-    });
+  const handleUpdateCooldown = async () => {
+    if (!editCooldownSecs || Number(editCooldownSecs) <= 0 || !faucetAddress) return;
+    try {
+      const feeOverrides = await getSafeGasFees(publicClient);
+      (writeCd as any)({
+        address: faucetAddress,
+        abi: ABIS.daoFaucet,
+        functionName: 'setCooldownPeriod',
+        args: [BigInt(editCooldownSecs)],
+        ...feeOverrides,
+      });
+    } catch (err) {
+      console.error('Failed to update cooldown:', err);
+    }
   };
 
-  const handleTogglePause = () => {
-    (writePause as any)({
-      address: faucetAddress,
-      abi: ABIS.daoFaucet,
-      functionName: 'setPaused',
-      args: [!isPaused],
-    });
+  const handleUpdateClaimAmount = async () => {
+    if (!editClaimAmount || Number(editClaimAmount) <= 0 || !faucetAddress) return;
+    try {
+      const feeOverrides = await getSafeGasFees(publicClient);
+      (writeAmt as any)({
+        address: faucetAddress,
+        abi: ABIS.daoFaucet,
+        functionName: 'setClaimAmount',
+        args: [parseUnits(editClaimAmount, 18)],
+        ...feeOverrides,
+      });
+    } catch (err) {
+      console.error('Failed to update claim amount:', err);
+    }
   };
 
-  const handleDepositTokens = () => {
-    if (!depositAmount || Number(depositAmount) <= 0) return;
-    const parsed = parseUnits(depositAmount, 18);
-    (writeDeposit as any)({
-      address: tokenAddress,
-      abi: ABIS.daoToken,
-      functionName: 'transfer',
-      args: [faucetAddress, parsed],
-    });
+  const handleTogglePause = async () => {
+    if (!faucetAddress) return;
+    try {
+      const feeOverrides = await getSafeGasFees(publicClient);
+      (writePause as any)({
+        address: faucetAddress,
+        abi: ABIS.daoFaucet,
+        functionName: 'setPaused',
+        args: [!isPaused],
+        ...feeOverrides,
+      });
+    } catch (err) {
+      console.error('Failed to toggle pause:', err);
+    }
+  };
+
+  const handleDepositTokens = async () => {
+    if (!depositAmount || Number(depositAmount) <= 0 || !faucetAddress) return;
+    try {
+      const parsed = parseUnits(depositAmount, 18);
+      const feeOverrides = await getSafeGasFees(publicClient);
+      (writeDeposit as any)({
+        address: tokenAddress,
+        abi: ABIS.daoToken,
+        functionName: 'transfer',
+        args: [faucetAddress, parsed],
+        ...feeOverrides,
+      });
+    } catch (err) {
+      console.error('Failed to deposit tokens:', err);
+    }
   };
 
   const isClaiming = isClaimPending || isClaimWaiting;
@@ -302,6 +398,65 @@ export const FaucetCard: React.FC<FaucetCardProps> = ({
           </div>
         )}
 
+        {/* Missing Minter Role Alert for Mint Mode */}
+        {isMissingMinterRole && (
+          <div className="p-3.5 rounded-xl bg-amber-500/10 border border-amber-500/20 text-xs space-y-2.5">
+            <div className="flex items-start gap-2.5 text-amber-300">
+              <KeyRound className="w-4 h-4 shrink-0 mt-0.5 text-amber-400" />
+              <div className="space-y-0.5">
+                <p className="font-semibold text-amber-200">Minter Permission Required</p>
+                <p className="text-[11px] text-amber-300/80 leading-relaxed">
+                  This faucet is in Mint Mode. It requires <span className="font-mono text-amber-200">MINTER_ROLE</span> permission on the <span className="font-mono text-amber-200">{tokenSymbol}</span> token contract to distribute tokens.
+                </p>
+              </div>
+            </div>
+
+            {isTokenAdmin ? (
+              <button
+                type="button"
+                onClick={handleGrantMinterRole}
+                disabled={isGrantPending || isGrantWaiting}
+                className="w-full py-2 px-3 rounded-lg bg-amber-500 hover:bg-amber-400 disabled:opacity-50 text-slate-950 font-bold text-xs transition flex items-center justify-center gap-1.5 shadow-md shadow-amber-500/10"
+              >
+                {isGrantWaiting ? (
+                  <>
+                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                    <span>Granting Minter Role on LitVM...</span>
+                  </>
+                ) : isGrantPending ? (
+                  <>
+                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                    <span>Confirm in Wallet...</span>
+                  </>
+                ) : (
+                  <>
+                    <Sparkles className="w-3.5 h-3.5" />
+                    <span>Grant Minter Role to Faucet (1-Click)</span>
+                  </>
+                )}
+              </button>
+            ) : (
+              <p className="text-[11px] text-slate-400 italic">
+                Only the DAO token creator ({tokenAddress.slice(0, 6)}...{tokenAddress.slice(-4)}) can grant minting rights to this faucet.
+              </p>
+            )}
+
+            {grantError && (
+              <p className="text-[11px] text-rose-400">
+                Grant role failed: {grantError.message.slice(0, 100)}
+              </p>
+            )}
+          </div>
+        )}
+
+        {/* Underfunded Alert for Pre-Funded Mode */}
+        {isUnderfunded && (
+          <div className="p-2.5 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-300 text-xs flex items-center gap-2">
+            <AlertCircle className="w-4 h-4 text-amber-400 shrink-0" />
+            <span>Faucet reserve pool is currently insufficient to satisfy claims. Deposit tokens below.</span>
+          </div>
+        )}
+
         {Boolean(isClaimSuccess) ? (
           <div className="p-2.5 rounded-xl bg-brand-500/10 border border-brand-500/20 text-brand-300 text-xs flex items-center gap-2">
             <CheckCircle2 className="w-4 h-4 text-brand-400 shrink-0" />
@@ -319,9 +474,9 @@ export const FaucetCard: React.FC<FaucetCardProps> = ({
         {/* Claim Action Button */}
         <button
           onClick={handleClaim}
-          disabled={!isConnected || !eligible || remainingSeconds > 0 || isClaiming || isPaused}
+          disabled={!isConnected || !eligible || remainingSeconds > 0 || isClaiming || isPaused || isMissingMinterRole || isUnderfunded}
           className={`w-full py-2.5 px-4 rounded-xl font-semibold text-sm flex items-center justify-center gap-2 transition ${
-            !eligible || remainingSeconds > 0 || isPaused || !isConnected
+            !eligible || remainingSeconds > 0 || isPaused || !isConnected || isMissingMinterRole || isUnderfunded
               ? 'bg-slate-800 text-slate-500 cursor-not-allowed border border-slate-700/40'
               : 'bg-cyan-500 hover:bg-cyan-400 text-slate-950 shadow-md shadow-cyan-500/10'
           }`}
@@ -337,6 +492,10 @@ export const FaucetCard: React.FC<FaucetCardProps> = ({
               <span>
                 {!isConnected
                   ? 'Connect Wallet to Claim'
+                  : isMissingMinterRole
+                  ? 'Faucet Requires Minter Role'
+                  : isUnderfunded
+                  ? 'Faucet Pool Depleted'
                   : remainingSeconds > 0
                   ? `Cooldown Active (${formatTime(remainingSeconds)})`
                   : isPaused
