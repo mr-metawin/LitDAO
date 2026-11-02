@@ -25,10 +25,40 @@ export const litvm = defineChain({
       apiUrl: 'https://liteforge.explorer.caldera.xyz/api',
     },
   },
+  fees: {
+    baseFeeMultiplier: 1.5, // 50% buffer to prevent "max fee per gas less than block base fee" on Caldera
+    defaultPriorityFee: 50000000n, // 0.05 Gwei priority fee (Caldera RPC returns 0x0 by default)
+  },
   testnet: true,
 });
 
 export const FAUCET_HUB_URL = 'https://liteforge.hub.caldera.xyz';
 export const SUBGRAPH_URL = import.meta.env.VITE_GOLDSKY_GRAPHQL_URL || 'https://api.goldsky.com/api/public/project_cm2amh4pghfqk01wega7t4x7l/subgraphs/litdao/1.0.0/gn';
+
+/**
+ * Helper to obtain safe fee parameters with a buffer for LitVM transactions
+ */
+export async function getSafeGasFees(publicClient?: any) {
+  if (!publicClient) {
+    return {
+      maxFeePerGas: 300000000n, // 0.3 Gwei safe default
+      maxPriorityFeePerGas: 50000000n, // 0.05 Gwei
+    };
+  }
+  try {
+    const fees = await publicClient.estimateFeesPerGas();
+    return {
+      maxFeePerGas: fees.maxFeePerGas,
+      maxPriorityFeePerGas: fees.maxPriorityFeePerGas,
+    };
+  } catch (err) {
+    console.warn('Could not estimate gas fees, using safe fallback:', err);
+    return {
+      maxFeePerGas: 300000000n,
+      maxPriorityFeePerGas: 50000000n,
+    };
+  }
+}
+
 
 

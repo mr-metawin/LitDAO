@@ -1,8 +1,10 @@
 import React, { useState } from 'react';
-import { useAccount, useReadContract, useWriteContract, useWaitForTransactionReceipt } from 'wagmi';
+import { useAccount, useReadContract, useWriteContract, useWaitForTransactionReceipt, usePublicClient } from 'wagmi';
 import { isAddress, parseEther, encodeFunctionData, formatUnits } from 'viem';
 import { X, Send, Loader2, AlertCircle, CheckCircle2 } from 'lucide-react';
 import { ABIS } from '../config/contracts';
+import { getSafeGasFees } from '../config/chain';
+
 
 interface CreateProposalModalProps {
   isOpen: boolean;
@@ -20,6 +22,8 @@ export const CreateProposalModal: React.FC<CreateProposalModalProps> = ({
   tokenSymbol,
 }) => {
   const { address, isConnected } = useAccount();
+  const publicClient = usePublicClient();
+
 
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
@@ -56,7 +60,7 @@ export const CreateProposalModal: React.FC<CreateProposalModalProps> = ({
   const threshold = thresholdData ? BigInt(thresholdData.toString()) : 0n;
   const hasThreshold = userVotes >= threshold;
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!title.trim() || !description.trim()) return;
 
@@ -78,13 +82,20 @@ export const CreateProposalModal: React.FC<CreateProposalModalProps> = ({
       calldatas = [(calldataHex.startsWith('0x') ? calldataHex : `0x${calldataHex}`) as `0x${string}`];
     }
 
-    (writeContract as any)({
-      address: governorAddress,
-      abi: ABIS.daoGovernor,
-      functionName: 'propose',
-      args: [targets, values, calldatas, fullDescription],
-    });
+    try {
+      const feeOverrides = await getSafeGasFees(publicClient);
+      (writeContract as any)({
+        address: governorAddress,
+        abi: ABIS.daoGovernor,
+        functionName: 'propose',
+        args: [targets, values, calldatas, fullDescription],
+        ...feeOverrides,
+      });
+    } catch (err: any) {
+      console.error('Failed to submit proposal:', err);
+    }
   };
+
 
   const isPending = isWritePending || isTxWaiting;
 

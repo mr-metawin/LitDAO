@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useAccount, useWriteContract, useWaitForTransactionReceipt } from 'wagmi';
+import { useAccount, useWriteContract, useWaitForTransactionReceipt, usePublicClient } from 'wagmi';
 import { useConnectModal } from '@rainbow-me/rainbowkit';
 import { parseUnits, isAddress, decodeEventLog } from 'viem';
 import {
@@ -20,12 +20,14 @@ import {
 } from 'lucide-react';
 import { CONTRACT_ADDRESSES, ABIS } from '../config/contracts';
 import { uploadImageToPinata } from '../services/pinata';
-
+import { getSafeGasFees } from '../config/chain';
 
 export const CreateDaoPage: React.FC = () => {
   const navigate = useNavigate();
   const { address, isConnected } = useAccount();
   const { openConnectModal } = useConnectModal();
+  const publicClient = usePublicClient();
+
 
   // Local form error
   const [formError, setFormError] = useState<string | null>(null);
@@ -90,6 +92,9 @@ export const CreateDaoPage: React.FC = () => {
   const getErrorMessage = (err: any) => {
     if (!err) return null;
     if (typeof err === 'string') return err;
+    if (err.message?.includes('max fee per gas less than block base fee') || err.details?.includes('max fee per gas less than block base fee')) {
+      return 'Network gas price fluctuation detected. Safe gas fee buffers have been applied — please click Deploy again.';
+    }
     if (err.shortMessage) return err.shortMessage;
     if (err.details) return err.details;
     if (err.message) {
@@ -148,16 +153,19 @@ export const CreateDaoPage: React.FC = () => {
 
             // Auto-register metadata on LitVM if image or description was provided
             if (daoImageUri || daoDescription.trim()) {
-              try {
-                (writeMetadata as any)({
-                  address: CONTRACT_ADDRESSES.daoMetadataRegistry,
-                  abi: ABIS.daoMetadataRegistry,
-                  functionName: 'setDAOMetadata',
-                  args: [gov, daoImageUri || '', daoDescription.trim()],
-                });
-              } catch (metaErr) {
-                console.warn('Metadata registration error:', metaErr);
-              }
+              getSafeGasFees(publicClient).then((feeOverrides) => {
+                try {
+                  (writeMetadata as any)({
+                    address: CONTRACT_ADDRESSES.daoMetadataRegistry,
+                    abi: ABIS.daoMetadataRegistry,
+                    functionName: 'setDAOMetadata',
+                    args: [gov, daoImageUri || '', daoDescription.trim()],
+                    ...feeOverrides,
+                  });
+                } catch (metaErr) {
+                  console.warn('Metadata registration error:', metaErr);
+                }
+              });
             }
 
             if (enableFaucet) {
@@ -172,7 +180,8 @@ export const CreateDaoPage: React.FC = () => {
         }
       }
     }
-  }, [govReceipt, enableFaucet, navigate, daoImageUri, daoDescription, writeMetadata]);
+  }, [govReceipt, enableFaucet, navigate, daoImageUri, daoDescription, writeMetadata, publicClient]);
+
 
   // Handle Image Upload & Pinning to Pinata IPFS
   const handleImageSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -212,8 +221,9 @@ export const CreateDaoPage: React.FC = () => {
   }, [isFaucetSuccess, deployedGovernorAddr, navigate]);
 
 
-  const handleCreateToken = (e: React.FormEvent) => {
+  const handleCreateToken = async (e: React.FormEvent) => {
     e.preventDefault();
+
     setFormError(null);
 
     if (tokenMode === 'existing') {
@@ -238,18 +248,20 @@ export const CreateDaoPage: React.FC = () => {
 
     try {
       const supply = parseUnits(initialSupply || '1000000', 18);
+      const feeOverrides = await getSafeGasFees(publicClient);
       (writeToken as any)({
         address: CONTRACT_ADDRESSES.tokenFactory,
         abi: ABIS.tokenFactory,
         functionName: 'createToken',
         args: [tokenName.trim(), tokenSymbol.trim(), supply, address],
+        ...feeOverrides,
       });
     } catch (err: any) {
       setFormError(err?.message || 'Failed to initiate token deployment');
     }
   };
 
-  const handleCreateGovernor = (e: React.FormEvent) => {
+  const handleCreateGovernor = async (e: React.FormEvent) => {
     e.preventDefault();
     setFormError(null);
 
@@ -281,18 +293,20 @@ export const CreateDaoPage: React.FC = () => {
         timelockMinDelay: BigInt(timelockDelay || '60'),
       };
 
+      const feeOverrides = await getSafeGasFees(publicClient);
       (writeGov as any)({
         address: CONTRACT_ADDRESSES.governorFactory,
         abi: ABIS.governorFactory,
         functionName: 'createGovernor',
         args: [params],
+        ...feeOverrides,
       });
     } catch (err: any) {
       setFormError(err?.message || 'Failed to initiate governor deployment');
     }
   };
 
-  const handleCreateFaucet = (e: React.FormEvent) => {
+  const handleCreateFaucet = async (e: React.FormEvent) => {
     e.preventDefault();
     setFormError(null);
 
@@ -312,6 +326,7 @@ export const CreateDaoPage: React.FC = () => {
     }
 
     try {
+      const feeOverrides = await getSafeGasFees(publicClient);
       (writeFaucet as any)({
         address: CONTRACT_ADDRESSES.faucetFactory,
         abi: ABIS.faucetFactory,
@@ -322,6 +337,7 @@ export const CreateDaoPage: React.FC = () => {
           BigInt(cooldownPeriod || '3600'),
           faucetMode,
         ],
+        ...feeOverrides,
       });
     } catch (err: any) {
       setFormError(err?.message || 'Failed to initiate faucet deployment');

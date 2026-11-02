@@ -1,5 +1,5 @@
 import React, { useState, useRef } from 'react';
-import { useAccount, useWriteContract, useWaitForTransactionReceipt } from 'wagmi';
+import { useAccount, useWriteContract, useWaitForTransactionReceipt, usePublicClient } from 'wagmi';
 import { useConnectModal } from '@rainbow-me/rainbowkit';
 import {
   X,
@@ -13,6 +13,8 @@ import {
 } from 'lucide-react';
 import { CONTRACT_ADDRESSES, ABIS } from '../config/contracts';
 import { uploadImageToPinata, ipfsToGatewayUrl } from '../services/pinata';
+import { getSafeGasFees } from '../config/chain';
+
 
 interface UpdateDaoImageModalProps {
   isOpen: boolean;
@@ -35,8 +37,10 @@ export const UpdateDaoImageModal: React.FC<UpdateDaoImageModalProps> = ({
 }) => {
   const { isConnected, address } = useAccount();
   const { openConnectModal } = useConnectModal();
+  const publicClient = usePublicClient();
 
   const fileInputRef = useRef<HTMLInputElement>(null);
+
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(
     ipfsToGatewayUrl(currentImageUri) || null
@@ -118,16 +122,19 @@ export const UpdateDaoImageModal: React.FC<UpdateDaoImageModalProps> = ({
     }
 
     try {
+      const feeOverrides = await getSafeGasFees(publicClient);
       (writeContract as any)({
         address: CONTRACT_ADDRESSES.daoMetadataRegistry,
         abi: ABIS.daoMetadataRegistry,
         functionName: 'setDAOMetadata',
         args: [governorAddress, finalIpfsUri, description.trim()],
+        ...feeOverrides,
       });
     } catch (err: any) {
       setPinataError(err?.message || 'Failed to submit transaction');
     }
   };
+
 
   const isWorking = isUploadingPinata || isTxPending || isTxWaiting;
 
