@@ -17,10 +17,13 @@ import {
   Wallet,
   Camera,
   Upload,
+  KeyRound,
 } from 'lucide-react';
 import { CONTRACT_ADDRESSES, ABIS } from '../config/contracts';
 import { uploadImageToPinata } from '../services/pinata';
 import { getSafeGasFees } from '../config/chain';
+
+const MINTER_ROLE = '0x9f2df0fed2c77648de5860a4cc508cd0818c85b8b8a1ab4ceeef8d981c8956a6' as `0x${string}`;
 
 export const CreateDaoPage: React.FC = () => {
   const navigate = useNavigate();
@@ -64,6 +67,7 @@ export const CreateDaoPage: React.FC = () => {
   const [currentStep, setCurrentStep] = useState<1 | 2 | 3>(1);
   const [deployedTokenAddr, setDeployedTokenAddr] = useState<`0x${string}` | null>(null);
   const [deployedGovernorAddr, setDeployedGovernorAddr] = useState<`0x${string}` | null>(null);
+  const [deployedFaucetAddr, setDeployedFaucetAddr] = useState<`0x${string}` | null>(null);
 
   // Contract Writes
   // 1. Create Token
@@ -84,7 +88,13 @@ export const CreateDaoPage: React.FC = () => {
     hash: faucetTxHash,
   });
 
-  // 4. Set Metadata
+  // 4. Grant MINTER_ROLE to Faucet (Step 3 finalization for Mint Mode)
+  const { data: grantTxHash, writeContract: writeGrantRole, isPending: isGrantPending, error: grantError } = useWriteContract();
+  const { isLoading: isGrantWaiting, isSuccess: isGrantSuccess, error: grantReceiptError } = useWaitForTransactionReceipt({
+    hash: grantTxHash,
+  });
+
+  // 5. Set Metadata
   const { writeContract: writeMetadata } = useWriteContract();
 
 
@@ -110,7 +120,7 @@ export const CreateDaoPage: React.FC = () => {
     formError ||
     (currentStep === 1 && (getErrorMessage(tokenError) || getErrorMessage(tokenReceiptError) || (tokenReceipt?.status === 'reverted' ? 'Token deployment transaction reverted on-chain.' : null))) ||
     (currentStep === 2 && (getErrorMessage(govError) || getErrorMessage(govReceiptError) || (govReceipt?.status === 'reverted' ? 'Governor deployment transaction reverted on-chain.' : null))) ||
-    (currentStep === 3 && (getErrorMessage(faucetError) || getErrorMessage(faucetReceiptError) || (faucetReceipt?.status === 'reverted' ? 'Faucet deployment transaction reverted on-chain.' : null)));
+    (currentStep === 3 && (getErrorMessage(faucetError) || getErrorMessage(faucetReceiptError) || getErrorMessage(grantError) || getErrorMessage(grantReceiptError) || (faucetReceipt?.status === 'reverted' ? 'Faucet deployment transaction reverted on-chain.' : null)));
 
   // Extract deployed token address from TokenCreated event
   React.useEffect(() => {
@@ -213,12 +223,74 @@ export const CreateDaoPage: React.FC = () => {
     }
   };
 
-  // Redirect after faucet creation is confirmed
+  // Handle Faucet created: extract address and auto-grant MINTER_ROLE if Mint Mode
   React.useEffect(() => {
-    if (isFaucetSuccess && deployedGovernorAddr) {
-      navigate(`/dao/${deployedGovernorAddr}`);
+    if (faucetReceipt && faucetReceipt.logs) {
+      let createdFaucet: `0x${string}` | null = null;
+      for (const log of faucetReceipt.logs) {
+        try {
+          const decoded = decodeEventLog({
+            abi: ABIS.faucetFactory,
+            data: log.data,
+            topics: log.topics,
+          });
+          if (decoded.eventName === 'FaucetCreated') {
+            createdFaucet = (decoded.args as any).faucet;
+            setDeployedFaucetAddr(createdFaucet);
+            break;
+          }
+        } catch {
+          // continue
+        }
+      }
+
+      if (faucetMode === 0 && createdFaucet && deployedTokenAddr) {
+        // Automatically grant MINTER_ROLE on the token to the newly created faucet
+        getSafeGasFees(publicClient).then((feeOverrides) => {
+          try {
+            (writeGrantRole as any)({
+              address: deployedTokenAddr,
+              abi: ABIS.daoToken,
+              functionName: 'grantRole',
+              args: [MINTER_ROLE, createdFaucet],
+              ...feeOverrides,
+            });
+          } catch (err) {
+            console.error('Auto grantRole initiation error:', err);
+          }
+        });
+      } else if (faucetMode === 1 && deployedGovernorAddr) {
+        // Pre-funded mode does not need minter role; redirect to DAO page
+        navigate(`/dao/${deployedGovernorAddr}`);
+      }
     }
-  }, [isFaucetSuccess, deployedGovernorAddr, navigate]);
+  }, [faucetReceipt, faucetMode, deployedTokenAddr, deployedGovernorAddr, publicClient, writeGrantRole, navigate]);
+
+  // Redirect after minter role grant confirms
+  React.useEffect(() => {
+    if (isGrantSuccess && deployedGovernorAddr) {
+      const timer = setTimeout(() => {
+        navigate(`/dao/${deployedGovernorAddr}`);
+      }, 1500);
+      return () => clearTimeout(timer);
+    }
+  }, [isGrantSuccess, deployedGovernorAddr, navigate]);
+
+  const handleManualGrantMinter = async () => {
+    if (!deployedFaucetAddr || !deployedTokenAddr) return;
+    try {
+      const feeOverrides = await getSafeGasFees(publicClient);
+      (writeGrantRole as any)({
+        address: deployedTokenAddr,
+        abi: ABIS.daoToken,
+        functionName: 'grantRole',
+        args: [MINTER_ROLE, deployedFaucetAddr],
+        ...feeOverrides,
+      });
+    } catch (err: any) {
+      setFormError(err?.message || 'Failed to grant minter role');
+    }
+  };
 
 
   const handleCreateToken = async (e: React.FormEvent) => {
@@ -843,6 +915,34 @@ export const CreateDaoPage: React.FC = () => {
               </div>
             )}
 
+            {grantError && (
+              <div className="p-3.5 bg-amber-500/10 border border-amber-500/20 rounded-2xl text-xs space-y-2">
+                <div className="flex items-start gap-2 text-amber-300">
+                  <KeyRound className="w-4 h-4 shrink-0 mt-0.5 text-amber-400" />
+                  <span className="flex-1">
+                    Faucet was deployed successfully, but granting minter role was interrupted ({grantError.message.slice(0, 90)}).
+                  </span>
+                </div>
+                <div className="flex items-center gap-2 pt-1">
+                  <button
+                    type="button"
+                    onClick={handleManualGrantMinter}
+                    disabled={isGrantPending || isGrantWaiting}
+                    className="px-3.5 py-1.5 rounded-lg bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs transition"
+                  >
+                    Retry Granting Minter Role
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => navigate(`/dao/${deployedGovernorAddr}`)}
+                    className="px-3.5 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs transition"
+                  >
+                    Skip & Open DAO
+                  </button>
+                </div>
+              </div>
+            )}
+
             <div className="flex items-center gap-3 pt-2">
               <button
                 type="button"
@@ -864,18 +964,33 @@ export const CreateDaoPage: React.FC = () => {
               ) : (
                 <button
                   type="submit"
-                  disabled={isFaucetPending || isFaucetWaiting}
+                  disabled={isFaucetPending || isFaucetWaiting || isGrantPending || isGrantWaiting || isGrantSuccess}
                   className="flex-1 py-3 rounded-xl bg-brand-600 hover:bg-brand-500 disabled:opacity-50 disabled:cursor-not-allowed text-slate-950 font-bold text-sm transition flex items-center justify-center gap-2 shadow-lg shadow-brand-500/10"
                 >
                   {isFaucetPending ? (
                     <>
                       <Loader2 className="w-4 h-4 animate-spin" />
-                      <span>Confirm in Wallet...</span>
+                      <span>Confirm Faucet in Wallet...</span>
                     </>
                   ) : isFaucetWaiting ? (
                     <>
                       <Loader2 className="w-4 h-4 animate-spin" />
                       <span>Deploying Faucet on LitVM...</span>
+                    </>
+                  ) : isGrantPending ? (
+                    <>
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      <span>Confirm Minter Role in Wallet...</span>
+                    </>
+                  ) : isGrantWaiting ? (
+                    <>
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      <span>Authorizing Faucet Minter Role...</span>
+                    </>
+                  ) : isGrantSuccess ? (
+                    <>
+                      <CheckCircle2 className="w-4 h-4" />
+                      <span>DAO Ready! Opening Dashboard...</span>
                     </>
                   ) : (
                     <>
