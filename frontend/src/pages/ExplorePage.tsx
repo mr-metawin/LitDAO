@@ -226,7 +226,7 @@ export const ExplorePage: React.FC = () => {
       <div className="fixed bottom-6 right-6 z-50">
         <button
           onClick={() => setShowSupportModal(true)}
-          className="w-13 h-13 p-3.5 rounded-full bg-[#c8ff00] hover:bg-[#b5e600] text-black shadow-xl shadow-[#c8ff00]/20 flex items-center justify-center transition-transform hover:scale-110 active:scale-95"
+          className="w-14 h-14 p-3.5 rounded-full bg-[#c8ff00] hover:bg-[#b5e600] text-black shadow-xl shadow-[#c8ff00]/20 flex items-center justify-center transition-transform hover:scale-110 active:scale-95"
           title="LitDAO Protocol Hub"
         >
           <Headphones className="w-6 h-6 stroke-[2.2]" />
