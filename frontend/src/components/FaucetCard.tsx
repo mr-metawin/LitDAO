@@ -197,35 +197,35 @@ export const FaucetCard: React.FC<FaucetCardProps> = ({
 
   if (isLoadingFaucet || (!faucetAddress && isLoadingFaucet !== false)) {
     return (
-      <div className="bg-[#101726] border border-slate-800 rounded-2xl p-6 shadow-md animate-pulse">
+      <div className="bg-[#121212] border border-[#222222] rounded-3xl p-6 shadow-2xl animate-pulse">
         {/* Header Skeleton */}
-        <div className="flex items-center justify-between mb-4">
-          <div className="flex items-center gap-2.5">
-            <div className="w-9 h-9 rounded-xl bg-cyan-500/10 border border-cyan-500/20 flex items-center justify-center text-cyan-400">
-              <Droplets className="w-5 h-5 text-cyan-400" />
+        <div className="flex items-center justify-between mb-5">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-2xl bg-[#1c1c1c] border border-[#282828] flex items-center justify-center text-[#c8ff00]">
+              <Droplets className="w-5 h-5 text-[#c8ff00]" />
             </div>
             <div>
               <h3 className="font-bold text-white text-base">Token Faucet</h3>
-              <p className="text-xs text-slate-400">Instant testnet voting tokens</p>
+              <p className="text-xs text-[#777777]">Instant testnet voting tokens</p>
             </div>
           </div>
-          <span className="text-xs px-2.5 py-1 rounded-full font-semibold border bg-slate-800/80 text-slate-400 border-slate-700/60">
+          <span className="text-xs px-3 py-1 rounded-full font-semibold border bg-[#181818] text-[#777777] border-[#282828]">
             Connecting...
           </span>
         </div>
 
         <div className="space-y-4">
           {/* Info Box Skeleton */}
-          <div className="bg-slate-900/60 p-3.5 rounded-xl border border-slate-800/80 flex items-center justify-between">
+          <div className="bg-[#181818] p-4 rounded-2xl border border-[#242424] flex items-center justify-between">
             <div>
-              <span className="text-xs text-slate-400 block mb-0.5">Claim Allowance</span>
-              <span className="text-base font-bold text-slate-300 font-mono">
-                100 <span className="text-xs font-normal text-slate-400">{tokenSymbol}</span>
+              <span className="text-xs text-[#777777] block mb-0.5">Claim Allowance</span>
+              <span className="text-base font-bold text-white font-mono">
+                100 <span className="text-xs font-normal text-[#777777]">{tokenSymbol}</span>
               </span>
             </div>
             <div className="text-right">
-              <span className="text-xs text-slate-400 block mb-0.5">Cooldown</span>
-              <span className="text-xs font-semibold text-slate-300 font-mono">
+              <span className="text-xs text-[#777777] block mb-0.5">Cooldown</span>
+              <span className="text-xs font-semibold text-[#aaaaaa] font-mono">
                 1 hr
               </span>
             </div>
@@ -234,9 +234,9 @@ export const FaucetCard: React.FC<FaucetCardProps> = ({
           {/* Placeholder Claim Button */}
           <button
             disabled
-            className="w-full py-2.5 px-4 rounded-xl font-semibold text-sm flex items-center justify-center gap-2 bg-slate-800 text-slate-400 border border-slate-700/40 cursor-wait"
+            className="w-full py-3.5 px-4 rounded-2xl font-bold text-sm flex items-center justify-center gap-2 bg-[#181818] text-[#555555] border border-[#242424] cursor-wait"
           >
-            <Sparkles className="w-4 h-4 animate-pulse text-cyan-400" />
+            <Sparkles className="w-4 h-4 animate-pulse text-[#c8ff00]" />
             <span>Claim 100 {tokenSymbol}</span>
           </button>
         </div>
@@ -246,8 +246,8 @@ export const FaucetCard: React.FC<FaucetCardProps> = ({
 
   if (!faucetAddress || faucetAddress === '0x0000000000000000000000000000000000000000') {
     return (
-      <div className="bg-[#101726] border border-slate-800 rounded-2xl p-6 shadow-md text-slate-400 text-sm text-center">
-        <Droplets className="w-8 h-8 text-slate-600 mx-auto mb-2" />
+      <div className="bg-[#121212] border border-[#222222] rounded-3xl p-8 shadow-2xl text-[#777777] text-sm text-center">
+        <Droplets className="w-8 h-8 text-[#444444] mx-auto mb-2" />
         No testnet faucet configured for this DAO.
       </div>
     );
@@ -442,12 +442,12 @@ export const FaucetCard: React.FC<FaucetCardProps> = ({
 
         {/* Cooldown Timer Alert */}
         {remainingSeconds > 0 && (
-          <div className="p-3 rounded-xl bg-slate-900/90 border border-slate-800 text-slate-300 text-xs flex items-center justify-between">
+          <div className="p-3.5 rounded-2xl bg-[#181818] border border-[#242424] text-[#cccccc] text-xs flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <Clock className="w-4 h-4 text-cyan-400 animate-pulse shrink-0" />
+              <Clock className="w-4 h-4 text-[#c8ff00] animate-pulse shrink-0" />
               <span>Next claim available in:</span>
             </div>
-            <span className="font-mono font-bold text-cyan-400 text-sm">
+            <span className="font-mono font-bold text-[#c8ff00] text-sm">
               {formatTime(remainingSeconds)}
             </span>
           </div>
@@ -543,7 +543,7 @@ export const FaucetCard: React.FC<FaucetCardProps> = ({
             </>
           ) : isInitialStateLoading ? (
             <>
-              <Sparkles className="w-4 h-4 animate-pulse text-cyan-400" />
+              <Sparkles className="w-4 h-4 animate-pulse text-[#c8ff00]" />
               <span>Claim {formattedClaimAmount} {tokenSymbol}</span>
             </>
           ) : (

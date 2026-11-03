@@ -117,17 +117,17 @@ export const ProposalCard: React.FC<ProposalCardProps> = ({ proposal, governorAd
       <div className="space-y-2 mt-4 pt-3 border-t border-[#1e1e1e]">
         <div className="flex justify-between text-xs">
           <span className="flex items-center gap-1 text-white font-semibold">
-            For: <span className="text-[#c8ff00]">{forPct}%</span> ({Number(formatUnits(forVotes, 18)).toLocaleString()} votes)
+            For: <span className="text-[#c8ff00] font-mono">{forPct}%</span> ({Number(formatUnits(forVotes, 18)).toLocaleString()} votes)
           </span>
           <span className="flex items-center gap-1 text-[#888888] font-semibold">
-            Against: <span className="text-rose-400">{againstPct}%</span> ({Number(formatUnits(againstVotes, 18)).toLocaleString()} votes)
+            Against: <span className="text-[#cccccc] font-mono">{againstPct}%</span> ({Number(formatUnits(againstVotes, 18)).toLocaleString()} votes)
           </span>
         </div>
 
         <div className="w-full h-2 rounded-full bg-[#1e1e1e] overflow-hidden flex">
           <div style={{ width: `${forPct}%` }} className="h-full bg-[#c8ff00]" />
-          <div style={{ width: `${againstPct}%` }} className="h-full bg-rose-500" />
-          <div style={{ width: `${abstainPct}%` }} className="h-full bg-[#444444]" />
+          <div style={{ width: `${againstPct}%` }} className="h-full bg-[#555555]" />
+          <div style={{ width: `${abstainPct}%` }} className="h-full bg-[#333333]" />
         </div>
       </div>
     </div>
