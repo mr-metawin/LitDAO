@@ -66,6 +66,12 @@ type TokenHolder @entity(immutable: false) {
   updatedAt: BigInt!
 }
 
+type TokenDAO @entity(immutable: false) {
+  id: ID! # Token address in lowercase hex
+  dao: DAO
+  holderCount: BigInt!
+}
+
 type Token @entity(immutable: true) {
   id: ID! # Token address
   creator: Bytes!

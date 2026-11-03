@@ -22,7 +22,7 @@ export const GasWarningBanner: React.FC = () => {
   }
 
   return (
-    <div className="bg-amber-500/10 border-b border-amber-500/30 px-4 py-2.5 text-amber-300 text-sm flex items-center justify-between flex-wrap gap-2">
+    <div className="bg-[#1a1405] border-b border-amber-500/20 px-4 py-2 text-amber-300 text-xs sm:text-sm flex items-center justify-between flex-wrap gap-2">
       <div className="flex items-center gap-2">
         <AlertTriangle className="w-4 h-4 text-amber-400 shrink-0" />
         <span>
@@ -33,10 +33,10 @@ export const GasWarningBanner: React.FC = () => {
         href={FAUCET_HUB_URL}
         target="_blank"
         rel="noopener noreferrer"
-        className="inline-flex items-center gap-1.5 px-3 py-1 rounded-md bg-amber-500/20 hover:bg-amber-500/30 text-amber-200 font-medium text-xs transition border border-amber-500/40"
+        className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-400/10 hover:bg-amber-400/20 text-amber-300 font-semibold text-xs transition border border-amber-400/30"
       >
-        <span>Get zkLTC Gas from Caldera Hub</span>
-        <ExternalLink className="w-3.5 h-3.5" />
+        <span>Get zkLTC Gas</span>
+        <ExternalLink className="w-3 h-3" />
       </a>
     </div>
   );

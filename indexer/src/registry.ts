@@ -1,7 +1,7 @@
 import { BigInt, Address } from "@graphprotocol/graph-ts";
 import { DAORegistered } from "../generated/DAORegistry/DAORegistry";
 import { DAOGovernor } from "../generated/DAORegistry/DAOGovernor";
-import { DAO } from "../generated/schema";
+import { DAO, TokenDAO } from "../generated/schema";
 import { GovernorTemplate, TokenTemplate } from "../generated/templates";
 
 export function handleDAORegistered(event: DAORegistered): void {
@@ -20,7 +20,18 @@ export function handleDAORegistered(event: DAORegistered): void {
     dao.createdBlock = event.block.number;
     dao.proposalCount = BigInt.zero();
     dao.voterCount = BigInt.zero();
-    dao.holderCount = BigInt.zero();
+
+    // Link token to DAO and initialize holderCount
+    let tokenDaoId = tokenAddr.toHexString().toLowerCase();
+    let tokenDao = TokenDAO.load(tokenDaoId);
+    if (tokenDao == null) {
+      tokenDao = new TokenDAO(tokenDaoId);
+      tokenDao.holderCount = BigInt.zero();
+    }
+    tokenDao.dao = dao.id;
+    tokenDao.save();
+
+    dao.holderCount = tokenDao.holderCount;
 
     // Query name and timelock from governor contract
     let govContract = DAOGovernor.bind(governorAddr);
@@ -43,5 +54,13 @@ export function handleDAORegistered(event: DAORegistered): void {
     // Dynamically spawn templates
     GovernorTemplate.create(governorAddr);
     TokenTemplate.create(tokenAddr);
+  } else {
+    // If registered via GovernorFactory first, ensure tokenDao link is established
+    let tokenDaoId = tokenAddr.toHexString().toLowerCase();
+    let tokenDao = TokenDAO.load(tokenDaoId);
+    if (tokenDao != null) {
+      tokenDao.dao = dao.id;
+      tokenDao.save();
+    }
   }
 }

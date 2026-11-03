@@ -1,8 +1,18 @@
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { ConnectButton } from '@rainbow-me/rainbowkit';
-import { Shield, Compass, PlusCircle, ExternalLink } from 'lucide-react';
-import { litvm } from '../config/chain';
+import { Plus } from 'lucide-react';
+
+export const PixelXLogo: React.FC<{ className?: string }> = ({ className = 'w-6 h-6' }) => (
+  <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className={className}>
+    {/* 5 blocks arranged in an X/cross, each 5x5 */}
+    <rect x="2" y="2" width="6" height="6" rx="1.2" fill="#c8ff00" />
+    <rect x="16" y="2" width="6" height="6" rx="1.2" fill="#c8ff00" />
+    <rect x="9" y="9" width="6" height="6" rx="1.2" fill="#c8ff00" />
+    <rect x="2" y="16" width="6" height="6" rx="1.2" fill="#c8ff00" />
+    <rect x="16" y="16" width="6" height="6" rx="1.2" fill="#c8ff00" />
+  </svg>
+);
 
 export const Navbar: React.FC = () => {
   const location = useLocation();
@@ -12,76 +22,114 @@ export const Navbar: React.FC = () => {
   };
 
   return (
-    <header className="border-b border-slate-800/80 bg-[#0c121e]/80 backdrop-blur-md sticky top-0 z-40">
+    <header className="border-b border-[#1c1c1c] bg-[#000000]/95 backdrop-blur-xl sticky top-0 z-40 transition-colors">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
-        {/* Left: Brand & Navigation */}
-        <div className="flex items-center gap-8">
-          <Link to="/" className="flex items-center gap-2.5 group">
-            <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-brand-600 to-brand-400 flex items-center justify-center text-slate-950 font-black shadow-md shadow-brand-500/20 group-hover:scale-105 transition">
-              <Shield className="w-5 h-5 text-slate-950 fill-slate-950" />
+        {/* Left: OKX-Style Brand & Navigation */}
+        <div className="flex items-center gap-4 sm:gap-7">
+          <Link to="/" className="flex items-center gap-2.5 group shrink-0">
+            <div className="flex items-center justify-center group-hover:scale-105 transition-transform">
+              <PixelXLogo className="w-6 h-6 drop-shadow-[0_0_12px_rgba(200,255,0,0.5)]" />
             </div>
-            <div className="flex flex-col">
-              <span className="font-bold text-lg tracking-tight text-white flex items-center gap-1.5">
+            <div className="flex items-center gap-1.5">
+              <span className="font-extrabold text-lg sm:text-xl tracking-tight text-white">
                 LitDAO
-                <span className="text-[10px] uppercase tracking-wider font-extrabold px-1.5 py-0.5 rounded bg-brand-500/10 text-brand-400 border border-brand-500/20">
-                  Protocol
-                </span>
+              </span>
+              <span className="hidden xs:inline-block text-[10px] font-semibold tracking-wider px-1.5 py-0.5 rounded-md bg-[#181818] text-[#8e8e8e] border border-[#282828]">
+                Web3
               </span>
             </div>
           </Link>
 
-          {/* Navigation Links */}
-          <nav className="hidden md:flex items-center gap-1">
+          {/* Navigation Menu */}
+          <nav className="flex items-center gap-2 sm:gap-3 text-xs sm:text-sm font-medium">
             <Link
               to="/"
-              className={`px-3 py-1.5 rounded-lg text-sm font-medium transition flex items-center gap-1.5 ${
-                isActive('/') 
-                  ? 'bg-slate-800 text-white' 
-                  : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/50'
+              className={`px-3.5 py-2 rounded-full transition ${
+                isActive('/')
+                  ? 'text-white bg-[#1a1a1a] font-semibold'
+                  : 'text-[#888888] hover:text-white'
               }`}
             >
-              <Compass className="w-4 h-4" />
-              <span>Explore DAOs</span>
+              Explore DAOs
             </Link>
             <Link
               to="/create"
-              className={`px-3 py-1.5 rounded-lg text-sm font-medium transition flex items-center gap-1.5 ${
-                isActive('/create') 
-                  ? 'bg-slate-800 text-white' 
-                  : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/50'
-              }`}
+              className="h-10 sm:h-11 px-4 sm:px-5 rounded-full bg-[#c8ff00] hover:bg-[#b8eb00] text-black font-extrabold text-xs sm:text-sm tracking-tight transition shadow-lg shadow-[#c8ff00]/10 flex items-center gap-1.5 active:scale-95 shrink-0"
             >
-              <PlusCircle className="w-4 h-4" />
-              <span>Create DAO</span>
+              <Plus className="w-4 h-4 stroke-[2.5]" />
+              <span>Launch New DAO</span>
             </Link>
           </nav>
         </div>
 
-        {/* Right: Network indicator & Wallet Connect */}
-        <div className="flex items-center gap-3">
-          {/* LitVM Badge - Single Chain Indicator */}
-          <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-lg bg-slate-900 border border-slate-800 text-xs text-slate-300 font-mono">
-            <span className="relative flex h-2 w-2">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-brand-400 opacity-75"></span>
-              <span className="relative inline-flex rounded-full h-2 w-2 bg-brand-500"></span>
-            </span>
-            <span className="font-semibold text-slate-200">LitVM</span>
-            <span className="text-slate-500">4441</span>
-            <a
-              href={litvm.blockExplorers.default.url}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-slate-500 hover:text-slate-300 ml-0.5"
-              title="View LiteForge Explorer"
-            >
-              <ExternalLink className="w-3 h-3" />
-            </a>
-          </div>
+        {/* Right: Connect Wallet */}
+        <div className="flex items-center">
+          {/* Custom RainbowKit Connect Button styled like OKX Connect */}
+          <ConnectButton.Custom>
+            {({
+              account,
+              chain,
+              openAccountModal,
+              openChainModal,
+              openConnectModal,
+              mounted,
+            }) => {
+              const ready = mounted;
+              const connected = ready && account && chain;
 
-          <ConnectButton 
-            showBalance={false}
-            chainStatus="none"
-          />
+              return (
+                <div
+                  {...(!ready && {
+                    'aria-hidden': true,
+                    style: {
+                      opacity: 0,
+                      pointerEvents: 'none',
+                      userSelect: 'none',
+                    },
+                  })}
+                >
+                  {(() => {
+                    if (!connected) {
+                      return (
+                        <button
+                          onClick={openConnectModal}
+                          type="button"
+                          className="px-5 h-11 rounded-full bg-[#c8ff00] hover:bg-[#b5e600] text-black font-bold text-xs sm:text-sm tracking-tight transition shadow-lg shadow-[#c8ff00]/10 flex items-center gap-2 active:scale-95"
+                        >
+                          Connect wallet
+                        </button>
+                      );
+                    }
+
+                    if (chain.unsupported) {
+                      return (
+                        <button
+                          onClick={openChainModal}
+                          type="button"
+                          className="px-4 h-11 rounded-full bg-rose-500 hover:bg-rose-400 text-white font-bold text-xs transition flex items-center"
+                        >
+                          Wrong Network
+                        </button>
+                      );
+                    }
+
+                    return (
+                      <div className="flex items-center gap-2">
+                        <button
+                          onClick={openAccountModal}
+                          type="button"
+                          className="flex items-center gap-2.5 px-4 h-11 rounded-full bg-[#141414] hover:bg-[#1e1e1e] border border-[#2c2c2c] text-sm font-semibold text-white transition active:scale-95 shadow-sm"
+                        >
+                          <span className="w-2.5 h-2.5 rounded-full bg-[#c8ff00] ring-2 ring-[#c8ff00]/25"></span>
+                          <span className="tracking-tight font-mono">{account.displayName}</span>
+                        </button>
+                      </div>
+                    );
+                  })()}
+                </div>
+              );
+            }}
+          </ConnectButton.Custom>
         </div>
       </div>
     </header>

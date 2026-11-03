@@ -17,85 +17,81 @@ export const DaoCard: React.FC<DaoCardProps> = ({ dao }) => {
     : 'TOKEN';
 
   return (
-    <div className="bg-[#101726] border border-slate-800/80 rounded-2xl p-6 hover:border-brand-500/40 transition-all duration-300 hover:shadow-lg hover:shadow-brand-500/5 group flex flex-col justify-between">
+    <div className="bg-[#121212] border border-[#222222] hover:border-[#383838] rounded-3xl p-6 transition-all duration-300 hover:shadow-2xl hover:shadow-black group flex flex-col justify-between">
       <div>
-        {/* Top bar: Network Badge & Icon */}
-        <div className="flex items-center justify-between gap-2 mb-4">
-          <div className="flex items-center gap-2">
-            <div className="w-10 h-10 rounded-xl bg-slate-800/90 border border-slate-700/60 overflow-hidden flex items-center justify-center text-brand-400 group-hover:border-brand-500/50 group-hover:scale-105 transition shrink-0">
+        {/* Top: Avatar, Name & Network Badge */}
+        <div className="flex items-start justify-between gap-3 mb-5">
+          <div className="flex items-center gap-3 min-w-0">
+            <div className="w-12 h-12 rounded-2xl bg-[#1c1c1c] border border-[#2a2a2a] overflow-hidden flex items-center justify-center group-hover:scale-105 transition-transform shrink-0">
               <DaoAvatar
                 imageUri={rawImageUri || dao.imageUri}
                 alt={dao.name}
-                fallbackIconClassName="w-5 h-5 text-brand-400"
+                fallbackIconClassName="w-6 h-6 text-[#c8ff00]"
               />
             </div>
-            <div>
-              <h3 className="font-bold text-lg text-white group-hover:text-brand-300 transition tracking-tight line-clamp-1">
+            <div className="min-w-0">
+              <h3 className="font-bold text-lg text-white group-hover:text-[#c8ff00] transition-colors tracking-tight truncate">
                 {dao.name}
               </h3>
-              <p className="text-xs text-slate-400 font-mono">
-                {tokenSymbol} Governance
-              </p>
+              <div className="flex items-center gap-1.5 mt-0.5">
+                <span className="text-xs text-[#888888] font-mono bg-[#1a1a1a] px-2 py-0.5 rounded-md border border-[#262626]">
+                  {tokenSymbol}
+                </span>
+                <span className="text-[11px] text-[#555555] font-mono">
+                  {dao.governor.slice(0, 6)}...{dao.governor.slice(-4)}
+                </span>
+              </div>
             </div>
           </div>
 
-
-          {/* Network Badge - Explicitly LitVM */}
-          <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold bg-brand-500/10 text-brand-400 border border-brand-500/20 shrink-0">
-            <span className="w-1.5 h-1.5 rounded-full bg-brand-400"></span>
-            LitVM
+          {/* LitVM Badge with OKX Green Indicator */}
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-[#181818] text-white border border-[#262626] shrink-0">
+            <span className="w-1.5 h-1.5 rounded-full bg-[#c8ff00]"></span>
+            <span>LitVM</span>
           </span>
         </div>
 
         {/* Stats Grid */}
-        <div className="grid grid-cols-3 gap-2 py-4 my-2 border-y border-slate-800/80 text-center">
+        <div className="grid grid-cols-3 gap-2 py-4 my-3 rounded-2xl bg-[#181818] border border-[#222222] text-center">
           <div className="flex flex-col items-center">
-            <div className="flex items-center gap-1 text-slate-400 text-xs mb-1">
-              <Vote className="w-3.5 h-3.5 text-slate-400" />
+            <div className="flex items-center gap-1 text-[#777777] text-xs mb-1">
+              <Vote className="w-3.5 h-3.5 text-[#888888]" />
               <span>Proposals</span>
             </div>
-            <span className="font-bold text-slate-100 text-base">
+            <span className="font-extrabold text-white text-base">
               {dao.proposalCount ?? 0}
             </span>
           </div>
 
-          <div className="flex flex-col items-center border-x border-slate-800/80">
-            <div className="flex items-center gap-1 text-slate-400 text-xs mb-1">
-              <Users className="w-3.5 h-3.5 text-slate-400" />
+          <div className="flex flex-col items-center border-x border-[#282828]">
+            <div className="flex items-center gap-1 text-[#777777] text-xs mb-1">
+              <Users className="w-3.5 h-3.5 text-[#888888]" />
               <span>Voters</span>
             </div>
-            <span className="font-bold text-slate-100 text-base">
+            <span className="font-extrabold text-white text-base">
               {dao.voterCount ?? 0}
             </span>
           </div>
 
           <div className="flex flex-col items-center">
-            <div className="flex items-center gap-1 text-slate-400 text-xs mb-1">
-              <Coins className="w-3.5 h-3.5 text-slate-400" />
+            <div className="flex items-center gap-1 text-[#777777] text-xs mb-1">
+              <Coins className="w-3.5 h-3.5 text-[#888888]" />
               <span>Holders</span>
             </div>
-            <span className="font-bold text-slate-100 text-base">
+            <span className="font-extrabold text-[#c8ff00] text-base">
               {dao.holderCount ?? 0}
             </span>
           </div>
         </div>
-
-        {/* Address snippet */}
-        <div className="flex items-center justify-between text-xs text-slate-500 font-mono mb-4 pt-1">
-          <span>Governor</span>
-          <span className="text-slate-400 bg-slate-900/60 px-2 py-0.5 rounded border border-slate-800">
-            {dao.governor.slice(0, 6)}...{dao.governor.slice(-4)}
-          </span>
-        </div>
       </div>
 
-      {/* Action Button */}
+      {/* Action Button: OKX High-Contrast White Pill */}
       <Link
         to={`/dao/${dao.governor}`}
-        className="w-full mt-2 inline-flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl bg-slate-800/80 hover:bg-brand-600 text-slate-200 hover:text-slate-950 font-semibold text-sm transition-all duration-200 border border-slate-700/60 hover:border-brand-500 shadow-sm"
+        className="w-full mt-3 inline-flex items-center justify-center gap-2 px-5 py-3 rounded-2xl bg-white hover:bg-neutral-200 text-black font-bold text-sm transition-all duration-200 shadow-md active:scale-[0.98]"
       >
-        <span>View Governance</span>
-        <ArrowUpRight className="w-4 h-4" />
+        <span>Enter DAO</span>
+        <ArrowUpRight className="w-4 h-4 stroke-[2.5]" />
       </Link>
     </div>
   );

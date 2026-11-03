@@ -1,6 +1,6 @@
 import { BigInt } from "@graphprotocol/graph-ts";
 import { GovernorCreated } from "../generated/GovernorFactory/GovernorFactory";
-import { DAO } from "../generated/schema";
+import { DAO, TokenDAO } from "../generated/schema";
 import { GovernorTemplate, TokenTemplate } from "../generated/templates";
 
 export function handleGovernorCreated(event: GovernorCreated): void {
@@ -23,7 +23,18 @@ export function handleGovernorCreated(event: GovernorCreated): void {
     dao.createdBlock = event.block.number;
     dao.proposalCount = BigInt.zero();
     dao.voterCount = BigInt.zero();
-    dao.holderCount = BigInt.zero();
+
+    // Link token to DAO and initialize holderCount
+    let tokenDaoId = tokenAddr.toHexString().toLowerCase();
+    let tokenDao = TokenDAO.load(tokenDaoId);
+    if (tokenDao == null) {
+      tokenDao = new TokenDAO(tokenDaoId);
+      tokenDao.holderCount = BigInt.zero();
+    }
+    tokenDao.dao = dao.id;
+    tokenDao.save();
+
+    dao.holderCount = tokenDao.holderCount;
     dao.save();
 
     // Dynamically spawn templates
@@ -34,5 +45,13 @@ export function handleGovernorCreated(event: GovernorCreated): void {
     dao.timelock = timelockAddr;
     dao.name = name;
     dao.save();
+
+    // Ensure tokenDao link is established
+    let tokenDaoId = tokenAddr.toHexString().toLowerCase();
+    let tokenDao = TokenDAO.load(tokenDaoId);
+    if (tokenDao != null) {
+      tokenDao.dao = dao.id;
+      tokenDao.save();
+    }
   }
 }

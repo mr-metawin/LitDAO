@@ -395,32 +395,28 @@ export const FaucetCard: React.FC<FaucetCardProps> = ({
   const isClaiming = isClaimPending || isClaimWaiting;
 
   return (
-    <div className="bg-[#101726] border border-slate-800 rounded-2xl p-6 shadow-md">
+    <div className="bg-[#121212] border border-[#222222] rounded-3xl p-6 shadow-2xl">
       {/* Header */}
-      <div className="flex items-center justify-between mb-4">
-        <div className="flex items-center gap-2.5">
-          <div className="w-9 h-9 rounded-xl bg-cyan-500/10 border border-cyan-500/20 flex items-center justify-center text-cyan-400">
-            <Droplets className="w-5 h-5 text-cyan-400" />
+      <div className="flex items-center justify-between mb-5">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-2xl bg-[#1c1c1c] border border-[#282828] flex items-center justify-center text-[#c8ff00]">
+            <Droplets className="w-5 h-5 text-[#c8ff00]" />
           </div>
           <div>
             <h3 className="font-bold text-white text-base">Token Faucet</h3>
-            <p className="text-xs text-slate-400">Instant testnet voting tokens</p>
+            <p className="text-xs text-[#777777]">Instant testnet voting tokens</p>
           </div>
         </div>
 
         {/* Faucet Mode Badge */}
-        <span className={`text-xs px-2.5 py-1 rounded-full font-semibold border ${
-          mode === 0 
-            ? 'bg-blue-500/10 text-blue-400 border-blue-500/30' 
-            : 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30'
-        }`}>
+        <span className="text-xs px-3 py-1 rounded-full font-semibold border bg-[#181818] text-white border-[#282828]">
           {mode === 0 ? 'Mint Mode' : 'Pre-Funded'}
         </span>
       </div>
 
       <div className="space-y-4">
         {/* Info Box */}
-        <div className="bg-slate-900/60 p-3.5 rounded-xl border border-slate-800/80 flex items-center justify-between">
+        <div className="bg-[#181818] p-4 rounded-2xl border border-[#242424] flex items-center justify-between">
           <div>
             <span className="text-xs text-slate-400 block mb-0.5">Claim Allowance</span>
             <span className="text-base font-bold text-slate-100 font-mono">
@@ -534,10 +530,10 @@ export const FaucetCard: React.FC<FaucetCardProps> = ({
         <button
           onClick={handleClaim}
           disabled={!isConnected || isInitialStateLoading || !eligible || remainingSeconds > 0 || isClaiming || isPaused || isMissingMinterRole || isUnderfunded}
-          className={`w-full py-2.5 px-4 rounded-xl font-semibold text-sm flex items-center justify-center gap-2 transition ${
+          className={`w-full py-3.5 px-4 rounded-2xl font-bold text-sm flex items-center justify-center gap-2 transition active:scale-[0.99] ${
             isInitialStateLoading || !eligible || remainingSeconds > 0 || isPaused || !isConnected || isMissingMinterRole || isUnderfunded
-              ? 'bg-slate-800 text-slate-500 cursor-not-allowed border border-slate-700/40'
-              : 'bg-cyan-500 hover:bg-cyan-400 text-slate-950 shadow-md shadow-cyan-500/10 cursor-pointer'
+              ? 'bg-[#181818] text-[#555555] cursor-not-allowed border border-[#242424]'
+              : 'bg-[#c8ff00] hover:bg-[#b5e600] text-black shadow-lg shadow-[#c8ff00]/10 cursor-pointer'
           }`}
         >
           {isClaiming ? (

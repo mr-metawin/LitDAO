@@ -33,7 +33,7 @@ export const litvm = defineChain({
 });
 
 export const FAUCET_HUB_URL = 'https://liteforge.hub.caldera.xyz';
-export const SUBGRAPH_URL = import.meta.env.VITE_GOLDSKY_GRAPHQL_URL || 'https://api.goldsky.com/api/public/project_cm2amh4pghfqk01wega7t4x7l/subgraphs/litdao/1.0.0/gn';
+export const SUBGRAPH_URL = import.meta.env.VITE_GOLDSKY_GRAPHQL_URL || 'https://api.goldsky.com/api/public/project_cm2amh4pghfqk01wega7t4x7l/subgraphs/litdao/1.0.1/gn';
 
 /**
  * Helper to obtain safe fee parameters with a buffer for LitVM transactions

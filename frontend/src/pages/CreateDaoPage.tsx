@@ -420,79 +420,85 @@ export const CreateDaoPage: React.FC = () => {
     <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-8">
       {/* Header */}
       <div className="text-center space-y-3">
-        <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-brand-500/10 border border-brand-500/20 text-brand-400 text-xs font-semibold">
+        <div className="inline-flex items-center gap-1.5 px-3.5 py-1 rounded-full bg-[#121212] border border-[#222222] text-[#c8ff00] text-xs font-semibold">
           <Sparkles className="w-3.5 h-3.5" />
           <span>No-Code Governance Deployment</span>
         </div>
         <h1 className="text-3xl sm:text-4xl font-extrabold text-white tracking-tight">
           Launch a DAO on LitVM
         </h1>
-        <p className="text-slate-400 text-sm max-w-lg mx-auto">
+        <p className="text-[#888888] text-sm max-w-lg mx-auto">
           Deploy an OpenZeppelin v5 Governor, TimelockController, ERC20Votes token, and testnet faucet in 3 guided steps.
         </p>
       </div>
 
       {/* Stepper Tabs */}
       <div className="flex items-center justify-center gap-3">
-        <div className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold border transition ${
+        <div className={`flex items-center gap-2 px-4 py-2 rounded-full text-xs font-semibold border transition ${
           currentStep === 1 
-            ? 'bg-brand-500/20 text-brand-300 border-brand-500/40' 
+            ? 'bg-[#c8ff00] text-black border-[#c8ff00]' 
             : currentStep > 1 
-            ? 'bg-slate-900 text-slate-300 border-slate-800' 
-            : 'text-slate-500 border-transparent'
+            ? 'bg-[#181818] text-white border-[#262626]' 
+            : 'text-[#666666] border-transparent'
         }`}>
-          <span className="w-5 h-5 rounded-full bg-slate-800 flex items-center justify-center text-[10px]">1</span>
+          <span className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold ${
+            currentStep === 1 ? 'bg-black text-[#c8ff00]' : 'bg-[#222222] text-white'
+          }`}>1</span>
           <span>Token</span>
         </div>
 
-        <ArrowRight className="w-4 h-4 text-slate-600" />
+        <ArrowRight className="w-4 h-4 text-[#444444]" />
 
-        <div className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold border transition ${
+        <div className={`flex items-center gap-2 px-4 py-2 rounded-full text-xs font-semibold border transition ${
           currentStep === 2 
-            ? 'bg-brand-500/20 text-brand-300 border-brand-500/40' 
+            ? 'bg-[#c8ff00] text-black border-[#c8ff00]' 
             : currentStep > 2 
-            ? 'bg-slate-900 text-slate-300 border-slate-800' 
-            : 'text-slate-500 border-transparent'
+            ? 'bg-[#181818] text-white border-[#262626]' 
+            : 'text-[#666666] border-transparent'
         }`}>
-          <span className="w-5 h-5 rounded-full bg-slate-800 flex items-center justify-center text-[10px]">2</span>
+          <span className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold ${
+            currentStep === 2 ? 'bg-black text-[#c8ff00]' : 'bg-[#222222] text-[#888888]'
+          }`}>2</span>
           <span>Governor</span>
         </div>
 
-        <ArrowRight className="w-4 h-4 text-slate-600" />
+        <ArrowRight className="w-4 h-4 text-[#444444]" />
 
-        <div className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold border transition ${
+        <div className={`flex items-center gap-2 px-4 py-2 rounded-full text-xs font-semibold border transition ${
           currentStep === 3 
-            ? 'bg-brand-500/20 text-brand-300 border-brand-500/40' 
-            : 'text-slate-500 border-transparent'
+            ? 'bg-[#c8ff00] text-black border-[#c8ff00]' 
+            : 'text-[#666666] border-transparent'
         }`}>
-          <span className="w-5 h-5 rounded-full bg-slate-800 flex items-center justify-center text-[10px]">3</span>
+          <span className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold ${
+            currentStep === 3 ? 'bg-black text-[#c8ff00]' : 'bg-[#222222] text-[#888888]'
+          }`}>3</span>
           <span>Faucet</span>
         </div>
       </div>
 
       {/* Step 1: Token Setup */}
       {currentStep === 1 && (
-        <div className="bg-[#101726] border border-slate-800 rounded-3xl p-6 sm:p-8 shadow-xl space-y-6">
+        <div className="bg-[#121212] border border-[#222222] rounded-3xl p-6 sm:p-8 space-y-6">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-brand-500/10 border border-brand-500/20 flex items-center justify-center text-brand-400">
-              <Coins className="w-5 h-5 text-brand-400" />
+            <div className="w-10 h-10 rounded-2xl bg-[#181818] border border-[#262626] flex items-center justify-center text-[#c8ff00]">
+              <Coins className="w-5 h-5 text-[#c8ff00]" />
             </div>
             <div>
               <h2 className="text-xl font-bold text-white">Step 1: Governance Token</h2>
-              <p className="text-xs text-slate-400">ERC20Votes with Cancun timestamp clock and auto-delegation</p>
+              <p className="text-xs text-[#888888]">ERC20Votes with Cancun timestamp clock and auto-delegation</p>
             </div>
           </div>
 
           <form onSubmit={handleCreateToken} className="space-y-4">
-            <div className="flex rounded-xl bg-slate-900 p-1 border border-slate-800">
+            <div className="inline-flex w-full p-1 rounded-full bg-[#181818] border border-[#262626]">
               <button
                 type="button"
                 onClick={() => {
                   setTokenMode('new');
                   setFormError(null);
                 }}
-                className={`flex-1 py-2 text-xs font-semibold rounded-lg transition ${
-                  tokenMode === 'new' ? 'bg-slate-800 text-white' : 'text-slate-400'
+                className={`flex-1 py-2 text-xs font-semibold rounded-full transition ${
+                  tokenMode === 'new' ? 'bg-[#262626] text-white shadow-sm' : 'text-[#888888] hover:text-white'
                 }`}
               >
                 Create New Token
@@ -503,8 +509,8 @@ export const CreateDaoPage: React.FC = () => {
                   setTokenMode('existing');
                   setFormError(null);
                 }}
-                className={`flex-1 py-2 text-xs font-semibold rounded-lg transition ${
-                  tokenMode === 'existing' ? 'bg-slate-800 text-white' : 'text-slate-400'
+                className={`flex-1 py-2 text-xs font-semibold rounded-full transition ${
+                  tokenMode === 'existing' ? 'bg-[#262626] text-white shadow-sm' : 'text-[#888888] hover:text-white'
                 }`}
               >
                 Use Existing ERC20Votes
@@ -515,7 +521,7 @@ export const CreateDaoPage: React.FC = () => {
               <>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
-                    <label className="text-xs font-medium text-slate-300 block mb-1">Token Name</label>
+                    <label className="text-xs font-medium text-[#aaaaaa] block mb-1">Token Name</label>
                     <input
                       type="text"
                       value={tokenName}
@@ -524,23 +530,23 @@ export const CreateDaoPage: React.FC = () => {
                         setDaoName(`${e.target.value} DAO`);
                       }}
                       required
-                      className="w-full bg-slate-900 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-slate-100 focus:outline-none focus:border-brand-500"
+                      className="w-full bg-[#181818] border border-[#262626] rounded-2xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-[#c8ff00]"
                     />
                   </div>
                   <div>
-                    <label className="text-xs font-medium text-slate-300 block mb-1">Token Symbol</label>
+                    <label className="text-xs font-medium text-[#aaaaaa] block mb-1">Token Symbol</label>
                     <input
                       type="text"
                       value={tokenSymbol}
                       onChange={(e) => setTokenSymbol(e.target.value)}
                       required
-                      className="w-full bg-slate-900 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-slate-100 focus:outline-none focus:border-brand-500 font-mono"
+                      className="w-full bg-[#181818] border border-[#262626] rounded-2xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-[#c8ff00] font-mono"
                     />
                   </div>
                 </div>
 
                 <div>
-                  <label className="text-xs font-medium text-slate-300 block mb-1">
+                  <label className="text-xs font-medium text-[#aaaaaa] block mb-1">
                     Initial Supply (Minted & Auto-delegated to your wallet)
                   </label>
                   <input
@@ -548,13 +554,13 @@ export const CreateDaoPage: React.FC = () => {
                     value={initialSupply}
                     onChange={(e) => setInitialSupply(e.target.value)}
                     required
-                    className="w-full bg-slate-900 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-slate-100 focus:outline-none focus:border-brand-500 font-mono"
+                    className="w-full bg-[#181818] border border-[#262626] rounded-2xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-[#c8ff00] font-mono"
                   />
                 </div>
               </>
             ) : (
               <div>
-                <label className="text-xs font-medium text-slate-300 block mb-1">
+                <label className="text-xs font-medium text-[#aaaaaa] block mb-1">
                   Existing Token Address (Must be ERC20Votes)
                 </label>
                 <input
@@ -563,13 +569,13 @@ export const CreateDaoPage: React.FC = () => {
                   value={existingTokenAddress}
                   onChange={(e) => setExistingTokenAddress(e.target.value)}
                   required
-                  className="w-full bg-slate-900 border border-slate-800 rounded-xl px-4 py-2.5 text-xs text-slate-100 font-mono focus:outline-none focus:border-brand-500"
+                  className="w-full bg-[#181818] border border-[#262626] rounded-2xl px-4 py-2.5 text-xs text-white font-mono focus:outline-none focus:border-[#c8ff00]"
                 />
               </div>
             )}
 
             {currentError && (
-              <div className="p-3 bg-rose-500/10 border border-rose-500/20 rounded-xl text-xs text-rose-400 flex items-start gap-2">
+              <div className="p-3 bg-rose-500/10 border border-rose-500/20 rounded-2xl text-xs text-rose-400 flex items-start gap-2">
                 <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
                 <span className="flex-1 break-words">{currentError}</span>
               </div>
@@ -579,7 +585,7 @@ export const CreateDaoPage: React.FC = () => {
               <button
                 type="button"
                 onClick={() => (openConnectModal ? openConnectModal() : null)}
-                className="w-full py-3 rounded-xl bg-brand-600 hover:bg-brand-500 text-slate-950 font-bold text-sm transition flex items-center justify-center gap-2 shadow-lg shadow-brand-500/10 cursor-pointer"
+                className="w-full py-3 rounded-full bg-[#c8ff00] hover:bg-[#b8eb00] text-black font-semibold text-sm transition flex items-center justify-center gap-2 cursor-pointer"
               >
                 <Wallet className="w-4 h-4" />
                 <span>Connect Wallet to Continue</span>
@@ -588,7 +594,7 @@ export const CreateDaoPage: React.FC = () => {
               <button
                 type="submit"
                 disabled={isTokenPending || isTokenWaiting}
-                className="w-full py-3 rounded-xl bg-brand-600 hover:bg-brand-500 disabled:opacity-50 disabled:cursor-not-allowed text-slate-950 font-bold text-sm transition flex items-center justify-center gap-2 shadow-lg shadow-brand-500/10"
+                className="w-full py-3 rounded-full bg-[#c8ff00] hover:bg-[#b8eb00] disabled:opacity-50 disabled:cursor-not-allowed text-black font-semibold text-sm transition flex items-center justify-center gap-2"
               >
                 {isTokenPending ? (
                   <>
@@ -619,24 +625,24 @@ export const CreateDaoPage: React.FC = () => {
 
       {/* Step 2: Governor Setup */}
       {currentStep === 2 && (
-        <div className="bg-[#101726] border border-slate-800 rounded-3xl p-6 sm:p-8 shadow-xl space-y-6">
+        <div className="bg-[#121212] border border-[#222222] rounded-3xl p-6 sm:p-8 space-y-6">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-purple-500/10 border border-purple-500/20 flex items-center justify-center text-purple-400">
-              <Shield className="w-5 h-5 text-purple-400" />
+            <div className="w-10 h-10 rounded-2xl bg-[#181818] border border-[#262626] flex items-center justify-center text-[#c8ff00]">
+              <Shield className="w-5 h-5 text-[#c8ff00]" />
             </div>
             <div>
               <h2 className="text-xl font-bold text-white">Step 2: Governor & Timelock</h2>
-              <p className="text-xs text-slate-400">Configure voting thresholds, delay, quorum, and timelock</p>
+              <p className="text-xs text-[#888888]">Configure voting thresholds, delay, quorum, and timelock</p>
             </div>
           </div>
 
           <form onSubmit={handleCreateGovernor} className="space-y-4">
-            <div className="p-3 bg-slate-900/60 rounded-xl border border-slate-800 text-xs text-slate-300 font-mono">
-              Token Address: <span className="text-brand-400">{deployedTokenAddr}</span>
+            <div className="p-3 bg-[#181818] rounded-2xl border border-[#222222] text-xs text-[#888888] font-mono">
+              Token Address: <span className="text-[#c8ff00]">{deployedTokenAddr}</span>
             </div>
 
             <div>
-              <label className="text-xs font-medium text-slate-300 block mb-1">
+              <label className="text-xs font-medium text-[#aaaaaa] block mb-1">
                 DAO / Governor Name
               </label>
               <input
@@ -644,27 +650,27 @@ export const CreateDaoPage: React.FC = () => {
                 value={daoName}
                 onChange={(e) => setDaoName(e.target.value)}
                 required
-                className="w-full bg-slate-900 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-slate-100 focus:outline-none focus:border-brand-500"
+                className="w-full bg-[#181818] border border-[#262626] rounded-2xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-[#c8ff00]"
               />
             </div>
 
             {/* DAO Avatar & Description */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
-                <label className="text-xs font-medium text-slate-300 block mb-1">
+                <label className="text-xs font-medium text-[#aaaaaa] block mb-1">
                   DAO Avatar / Logo (Optional)
                 </label>
                 <div className="flex items-center gap-3">
-                  <div className="w-12 h-12 rounded-xl bg-slate-900 border border-slate-800 overflow-hidden flex items-center justify-center shrink-0">
+                  <div className="w-12 h-12 rounded-2xl bg-[#181818] border border-[#262626] overflow-hidden flex items-center justify-center shrink-0">
                     {daoImagePreview ? (
                       <img src={daoImagePreview} alt="DAO Preview" className="w-full h-full object-cover" />
                     ) : (
-                      <Camera className="w-5 h-5 text-slate-600" />
+                      <Camera className="w-5 h-5 text-[#555555]" />
                     )}
                   </div>
                   <div className="flex-1 space-y-1">
-                    <label className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-slate-300 text-xs font-semibold border border-slate-800 cursor-pointer transition">
-                      <Upload className="w-3.5 h-3.5 text-brand-400" />
+                    <label className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-[#1e1e1e] hover:bg-[#262626] text-white text-xs font-semibold border border-[#333333] cursor-pointer transition">
+                      <Upload className="w-3.5 h-3.5 text-[#c8ff00]" />
                       <span>{daoImagePreview ? 'Change Image' : 'Upload Image'}</span>
                       <input
                         type="file"
@@ -674,13 +680,13 @@ export const CreateDaoPage: React.FC = () => {
                       />
                     </label>
                     {isPinningImage && (
-                      <p className="text-[11px] text-brand-400 flex items-center gap-1">
+                      <p className="text-[11px] text-[#c8ff00] flex items-center gap-1">
                         <Loader2 className="w-3 h-3 animate-spin" />
                         <span>Pinning to IPFS via Pinata...</span>
                       </p>
                     )}
                     {daoImageUri && !isPinningImage && (
-                      <p className="text-[11px] text-emerald-400 flex items-center gap-1">
+                      <p className="text-[11px] text-[#c8ff00] flex items-center gap-1">
                         <CheckCircle2 className="w-3 h-3" />
                         <span>Pinned to Pinata IPFS</span>
                       </p>
@@ -693,7 +699,7 @@ export const CreateDaoPage: React.FC = () => {
               </div>
 
               <div>
-                <label className="text-xs font-medium text-slate-300 block mb-1">
+                <label className="text-xs font-medium text-[#aaaaaa] block mb-1">
                   DAO Description (Optional)
                 </label>
                 <input
@@ -701,15 +707,14 @@ export const CreateDaoPage: React.FC = () => {
                   placeholder="e.g. Protocol governance & community treasury"
                   value={daoDescription}
                   onChange={(e) => setDaoDescription(e.target.value)}
-                  className="w-full bg-slate-900 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-slate-100 placeholder:text-slate-600 focus:outline-none focus:border-brand-500"
+                  className="w-full bg-[#181818] border border-[#262626] rounded-2xl px-4 py-2.5 text-sm text-white placeholder:text-[#555555] focus:outline-none focus:border-[#c8ff00]"
                 />
               </div>
             </div>
 
-
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
-                <label className="text-xs font-medium text-slate-300 block mb-1">
+                <label className="text-xs font-medium text-[#aaaaaa] block mb-1">
                   Voting Delay (seconds before voting starts)
                 </label>
                 <input
@@ -717,17 +722,17 @@ export const CreateDaoPage: React.FC = () => {
                   value={votingDelay}
                   onChange={(e) => setVotingDelay(e.target.value)}
                   required
-                  className="w-full bg-slate-900 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-slate-100 font-mono focus:outline-none focus:border-brand-500"
+                  className="w-full bg-[#181818] border border-[#262626] rounded-2xl px-4 py-2.5 text-sm text-white font-mono focus:outline-none focus:border-[#c8ff00]"
                 />
               </div>
 
               <div>
                 <div className="flex items-center justify-between mb-1">
-                  <label className="text-xs font-medium text-slate-300">
+                  <label className="text-xs font-medium text-[#aaaaaa]">
                     Voting Period (days voting remains active)
                   </label>
                   {Number(votingPeriodDays) > 0 && (
-                    <span className="text-[10px] text-slate-500 font-mono">
+                    <span className="text-[10px] text-[#777777] font-mono">
                       ≈ {(Math.round(Number(votingPeriodDays) * 86400)).toLocaleString()}s
                     </span>
                   )}
@@ -740,14 +745,14 @@ export const CreateDaoPage: React.FC = () => {
                   onChange={(e) => setVotingPeriodDays(e.target.value)}
                   required
                   placeholder="3"
-                  className="w-full bg-slate-900 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-slate-100 font-mono focus:outline-none focus:border-brand-500"
+                  className="w-full bg-[#181818] border border-[#262626] rounded-2xl px-4 py-2.5 text-sm text-white font-mono focus:outline-none focus:border-[#c8ff00]"
                 />
               </div>
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               <div>
-                <label className="text-xs font-medium text-slate-300 block mb-1">
+                <label className="text-xs font-medium text-[#aaaaaa] block mb-1">
                   Quorum Fraction (%)
                 </label>
                 <input
@@ -757,12 +762,12 @@ export const CreateDaoPage: React.FC = () => {
                   required
                   min="1"
                   max="100"
-                  className="w-full bg-slate-900 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-slate-100 font-mono focus:outline-none focus:border-brand-500"
+                  className="w-full bg-[#181818] border border-[#262626] rounded-2xl px-4 py-2.5 text-sm text-white font-mono focus:outline-none focus:border-[#c8ff00]"
                 />
               </div>
 
               <div>
-                <label className="text-xs font-medium text-slate-300 block mb-1">
+                <label className="text-xs font-medium text-[#aaaaaa] block mb-1">
                   Proposal Threshold
                 </label>
                 <input
@@ -770,12 +775,12 @@ export const CreateDaoPage: React.FC = () => {
                   value={proposalThreshold}
                   onChange={(e) => setProposalThreshold(e.target.value)}
                   required
-                  className="w-full bg-slate-900 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-slate-100 font-mono focus:outline-none focus:border-brand-500"
+                  className="w-full bg-[#181818] border border-[#262626] rounded-2xl px-4 py-2.5 text-sm text-white font-mono focus:outline-none focus:border-[#c8ff00]"
                 />
               </div>
 
               <div>
-                <label className="text-xs font-medium text-slate-300 block mb-1">
+                <label className="text-xs font-medium text-[#aaaaaa] block mb-1">
                   Timelock Min Delay (s)
                 </label>
                 <input
@@ -783,26 +788,26 @@ export const CreateDaoPage: React.FC = () => {
                   value={timelockDelay}
                   onChange={(e) => setTimelockDelay(e.target.value)}
                   required
-                  className="w-full bg-slate-900 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-slate-100 font-mono focus:outline-none focus:border-brand-500"
+                  className="w-full bg-[#181818] border border-[#262626] rounded-2xl px-4 py-2.5 text-sm text-white font-mono focus:outline-none focus:border-[#c8ff00]"
                 />
               </div>
             </div>
 
-            <div className="flex items-center gap-3 p-3 bg-slate-900/60 rounded-xl border border-slate-800">
+            <div className="flex items-center gap-3 p-3 bg-[#181818] rounded-2xl border border-[#222222]">
               <input
                 type="checkbox"
                 id="enableFaucetCheckbox"
                 checked={enableFaucet}
                 onChange={(e) => setEnableFaucet(e.target.checked)}
-                className="w-4 h-4 text-brand-500 bg-slate-900 border-slate-700 rounded focus:ring-brand-500 focus:ring-2 cursor-pointer"
+                className="w-4 h-4 text-[#c8ff00] bg-[#121212] border-[#333333] rounded focus:ring-[#c8ff00] cursor-pointer"
               />
-              <label htmlFor="enableFaucetCheckbox" className="text-xs text-slate-300 cursor-pointer select-none">
-                Deploy testnet faucet in Step 3 <span className="text-slate-500">(Recommended for testnet community testing)</span>
+              <label htmlFor="enableFaucetCheckbox" className="text-xs text-[#cccccc] cursor-pointer select-none">
+                Deploy testnet faucet in Step 3 <span className="text-[#777777]">(Recommended for testnet community testing)</span>
               </label>
             </div>
 
             {currentError && (
-              <div className="p-3 bg-rose-500/10 border border-rose-500/20 rounded-xl text-xs text-rose-400 flex items-start gap-2">
+              <div className="p-3 bg-rose-500/10 border border-rose-500/20 rounded-2xl text-xs text-rose-400 flex items-start gap-2">
                 <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
                 <span className="flex-1 break-words">{currentError}</span>
               </div>
@@ -812,7 +817,7 @@ export const CreateDaoPage: React.FC = () => {
               <button
                 type="button"
                 onClick={() => (openConnectModal ? openConnectModal() : null)}
-                className="w-full py-3 rounded-xl bg-brand-600 hover:bg-brand-500 text-slate-950 font-bold text-sm transition flex items-center justify-center gap-2 shadow-lg shadow-brand-500/10 cursor-pointer"
+                className="w-full py-3 rounded-full bg-[#c8ff00] hover:bg-[#b8eb00] text-black font-semibold text-sm transition flex items-center justify-center gap-2 cursor-pointer"
               >
                 <Wallet className="w-4 h-4" />
                 <span>Connect Wallet to Continue</span>
@@ -821,7 +826,7 @@ export const CreateDaoPage: React.FC = () => {
               <button
                 type="submit"
                 disabled={isGovPending || isGovWaiting}
-                className="w-full py-3 rounded-xl bg-brand-600 hover:bg-brand-500 disabled:opacity-50 disabled:cursor-not-allowed text-slate-950 font-bold text-sm transition flex items-center justify-center gap-2 shadow-lg shadow-brand-500/10"
+                className="w-full py-3 rounded-full bg-[#c8ff00] hover:bg-[#b8eb00] disabled:opacity-50 disabled:cursor-not-allowed text-black font-semibold text-sm transition flex items-center justify-center gap-2"
               >
                 {isGovPending ? (
                   <>
@@ -847,24 +852,24 @@ export const CreateDaoPage: React.FC = () => {
 
       {/* Step 3: Testnet Faucet Setup */}
       {currentStep === 3 && (
-        <div className="bg-[#101726] border border-slate-800 rounded-3xl p-6 sm:p-8 shadow-xl space-y-6">
+        <div className="bg-[#121212] border border-[#222222] rounded-3xl p-6 sm:p-8 space-y-6">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-cyan-500/10 border border-cyan-500/20 flex items-center justify-center text-cyan-400">
-              <Droplets className="w-5 h-5 text-cyan-400" />
+            <div className="w-10 h-10 rounded-2xl bg-[#181818] border border-[#262626] flex items-center justify-center text-[#c8ff00]">
+              <Droplets className="w-5 h-5 text-[#c8ff00]" />
             </div>
             <div>
               <h2 className="text-xl font-bold text-white">Step 3: Testnet Faucet (Optional)</h2>
-              <p className="text-xs text-slate-400">Distribute test tokens with anti-spam cooldown</p>
+              <p className="text-xs text-[#888888]">Distribute test tokens with anti-spam cooldown</p>
             </div>
           </div>
 
           <form onSubmit={handleCreateFaucet} className="space-y-4">
-            <div className="flex rounded-xl bg-slate-900 p-1 border border-slate-800">
+            <div className="inline-flex w-full p-1 rounded-full bg-[#181818] border border-[#262626]">
               <button
                 type="button"
                 onClick={() => setFaucetMode(0)}
-                className={`flex-1 py-2 text-xs font-semibold rounded-lg transition ${
-                  faucetMode === 0 ? 'bg-slate-800 text-white' : 'text-slate-400'
+                className={`flex-1 py-2 text-xs font-semibold rounded-full transition ${
+                  faucetMode === 0 ? 'bg-[#262626] text-white shadow-sm' : 'text-[#888888] hover:text-white'
                 }`}
               >
                 Mint Mode (Direct on-demand minting)
@@ -872,8 +877,8 @@ export const CreateDaoPage: React.FC = () => {
               <button
                 type="button"
                 onClick={() => setFaucetMode(1)}
-                className={`flex-1 py-2 text-xs font-semibold rounded-lg transition ${
-                  faucetMode === 1 ? 'bg-slate-800 text-white' : 'text-slate-400'
+                className={`flex-1 py-2 text-xs font-semibold rounded-full transition ${
+                  faucetMode === 1 ? 'bg-[#262626] text-white shadow-sm' : 'text-[#888888] hover:text-white'
                 }`}
               >
                 Pre-Funded Mode (Transfers from reserve)
@@ -882,7 +887,7 @@ export const CreateDaoPage: React.FC = () => {
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
-                <label className="text-xs font-medium text-slate-300 block mb-1">
+                <label className="text-xs font-medium text-[#aaaaaa] block mb-1">
                   Claim Amount per Request
                 </label>
                 <input
@@ -890,12 +895,12 @@ export const CreateDaoPage: React.FC = () => {
                   value={claimAmount}
                   onChange={(e) => setClaimAmount(e.target.value)}
                   required
-                  className="w-full bg-slate-900 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-slate-100 font-mono focus:outline-none focus:border-brand-500"
+                  className="w-full bg-[#181818] border border-[#262626] rounded-2xl px-4 py-2.5 text-sm text-white font-mono focus:outline-none focus:border-[#c8ff00]"
                 />
               </div>
 
               <div>
-                <label className="text-xs font-medium text-slate-300 block mb-1">
+                <label className="text-xs font-medium text-[#aaaaaa] block mb-1">
                   Cooldown Period (seconds)
                 </label>
                 <input
@@ -903,13 +908,13 @@ export const CreateDaoPage: React.FC = () => {
                   value={cooldownPeriod}
                   onChange={(e) => setCooldownPeriod(e.target.value)}
                   required
-                  className="w-full bg-slate-900 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-slate-100 font-mono focus:outline-none focus:border-brand-500"
+                  className="w-full bg-[#181818] border border-[#262626] rounded-2xl px-4 py-2.5 text-sm text-white font-mono focus:outline-none focus:border-[#c8ff00]"
                 />
               </div>
             </div>
 
             {currentError && (
-              <div className="p-3 bg-rose-500/10 border border-rose-500/20 rounded-xl text-xs text-rose-400 flex items-start gap-2">
+              <div className="p-3 bg-rose-500/10 border border-rose-500/20 rounded-2xl text-xs text-rose-400 flex items-start gap-2">
                 <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
                 <span className="flex-1 break-words">{currentError}</span>
               </div>
@@ -928,14 +933,14 @@ export const CreateDaoPage: React.FC = () => {
                     type="button"
                     onClick={handleManualGrantMinter}
                     disabled={isGrantPending || isGrantWaiting}
-                    className="px-3.5 py-1.5 rounded-lg bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs transition"
+                    className="px-4 py-1.5 rounded-full bg-amber-500 hover:bg-amber-400 text-black font-semibold text-xs transition"
                   >
                     Retry Granting Minter Role
                   </button>
                   <button
                     type="button"
                     onClick={() => navigate(`/dao/${deployedGovernorAddr}`)}
-                    className="px-3.5 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs transition"
+                    className="px-4 py-1.5 rounded-full bg-[#1e1e1e] hover:bg-[#262626] text-[#888888] text-xs transition border border-[#333333]"
                   >
                     Skip & Open DAO
                   </button>
@@ -944,19 +949,11 @@ export const CreateDaoPage: React.FC = () => {
             )}
 
             <div className="flex items-center gap-3 pt-2">
-              {/* <button
-                type="button"
-                onClick={() => navigate(`/dao/${deployedGovernorAddr}`)}
-                className="px-5 py-3 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 font-semibold text-xs transition"
-              >
-                Skip Faucet & View DAO
-              </button> */}
-
               {!isConnected ? (
                 <button
                   type="button"
                   onClick={() => (openConnectModal ? openConnectModal() : null)}
-                  className="flex-1 py-3 rounded-xl bg-brand-600 hover:bg-brand-500 text-slate-950 font-bold text-sm transition flex items-center justify-center gap-2 shadow-lg shadow-brand-500/10 cursor-pointer"
+                  className="flex-1 py-3 rounded-full bg-[#c8ff00] hover:bg-[#b8eb00] text-black font-semibold text-sm transition flex items-center justify-center gap-2 cursor-pointer"
                 >
                   <Wallet className="w-4 h-4" />
                   <span>Connect Wallet to Continue</span>
@@ -965,7 +962,7 @@ export const CreateDaoPage: React.FC = () => {
                 <button
                   type="submit"
                   disabled={isFaucetPending || isFaucetWaiting || isGrantPending || isGrantWaiting || isGrantSuccess}
-                  className="flex-1 py-3 rounded-xl bg-brand-600 hover:bg-brand-500 disabled:opacity-50 disabled:cursor-not-allowed text-slate-950 font-bold text-sm transition flex items-center justify-center gap-2 shadow-lg shadow-brand-500/10"
+                  className="flex-1 py-3 rounded-full bg-[#c8ff00] hover:bg-[#b8eb00] disabled:opacity-50 disabled:cursor-not-allowed text-black font-semibold text-sm transition flex items-center justify-center gap-2"
                 >
                   {isFaucetPending ? (
                     <>

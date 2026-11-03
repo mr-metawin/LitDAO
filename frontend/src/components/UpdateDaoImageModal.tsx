@@ -148,17 +148,17 @@ export const UpdateDaoImageModal: React.FC<UpdateDaoImageModalProps> = ({
   const isWorking = isUploadingPinata || isTxPending || isTxWaiting;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm animate-in fade-in duration-200">
-      <div className="bg-[#101726] border border-slate-800 rounded-3xl w-full max-w-lg p-6 sm:p-8 shadow-2xl relative space-y-6">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-sm animate-in fade-in duration-200">
+      <div className="bg-[#121212] border border-[#222222] rounded-3xl w-full max-w-lg p-6 sm:p-8 shadow-2xl relative space-y-6">
         {/* Header */}
-        <div className="flex items-center justify-between border-b border-slate-800 pb-4">
+        <div className="flex items-center justify-between border-b border-[#222222] pb-4">
           <div className="flex items-center gap-2.5">
-            <div className="w-9 h-9 rounded-xl bg-brand-500/10 border border-brand-500/20 flex items-center justify-center text-brand-400">
-              <Camera className="w-5 h-5 text-brand-400" />
+            <div className="w-9 h-9 rounded-2xl bg-[#181818] border border-[#262626] flex items-center justify-center text-[#c8ff00]">
+              <Camera className="w-5 h-5 text-[#c8ff00]" />
             </div>
             <div>
               <h2 className="text-lg font-bold text-white">DAO Avatar & Metadata</h2>
-              <p className="text-xs text-slate-400 font-mono">
+              <p className="text-xs text-[#888888] font-mono">
                 {daoName} ({governorAddress.slice(0, 6)}...{governorAddress.slice(-4)})
               </p>
             </div>
@@ -169,7 +169,7 @@ export const UpdateDaoImageModal: React.FC<UpdateDaoImageModalProps> = ({
               onClose();
             }}
             disabled={isWorking}
-            className="p-1 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition"
+            className="p-1 rounded-full text-[#777777] hover:text-white hover:bg-[#1a1a1a] transition"
           >
             <X className="w-5 h-5" />
           </button>
@@ -177,12 +177,12 @@ export const UpdateDaoImageModal: React.FC<UpdateDaoImageModalProps> = ({
 
         {isTxSuccess ? (
           <div className="py-6 text-center space-y-4">
-            <div className="w-16 h-16 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 flex items-center justify-center mx-auto">
+            <div className="w-16 h-16 rounded-full bg-[#c8ff00]/10 border border-[#c8ff00]/20 text-[#c8ff00] flex items-center justify-center mx-auto">
               <CheckCircle2 className="w-8 h-8" />
             </div>
             <div>
               <h3 className="text-lg font-bold text-white">DAO Avatar Updated!</h3>
-              <p className="text-xs text-slate-400 max-w-sm mx-auto mt-1">
+              <p className="text-xs text-[#888888] max-w-sm mx-auto mt-1">
                 Your DAO image has been pinned to Pinata IPFS and recorded on the LitVM Metadata Registry.
               </p>
             </div>
@@ -192,7 +192,7 @@ export const UpdateDaoImageModal: React.FC<UpdateDaoImageModalProps> = ({
                 resetWrite();
                 onClose();
               }}
-              className="px-6 py-2.5 rounded-xl bg-brand-600 hover:bg-brand-500 text-slate-950 font-bold text-xs transition"
+              className="px-6 py-2.5 rounded-full bg-[#c8ff00] hover:bg-[#b8eb00] text-black font-semibold text-xs transition"
             >
               Done
             </button>
@@ -200,7 +200,7 @@ export const UpdateDaoImageModal: React.FC<UpdateDaoImageModalProps> = ({
         ) : (
           <form onSubmit={handleUploadAndSave} className="space-y-5">
             {!isAuthorized && (
-              <div className="p-3 bg-amber-500/10 border border-amber-500/20 rounded-xl text-xs text-amber-300 flex items-start gap-2">
+              <div className="p-3 bg-amber-500/10 border border-amber-500/20 rounded-2xl text-xs text-amber-300 flex items-start gap-2">
                 <AlertCircle className="w-4 h-4 shrink-0 mt-0.5 text-amber-400" />
                 <div className="space-y-0.5">
                   <p className="font-semibold text-amber-200">Restricted: Creator Only</p>
@@ -212,8 +212,8 @@ export const UpdateDaoImageModal: React.FC<UpdateDaoImageModalProps> = ({
             )}
 
             {/* Image Preview & Picker */}
-            <div className="flex flex-col sm:flex-row items-center gap-5 p-4 bg-slate-900/60 rounded-2xl border border-slate-800/80">
-              <div className="relative group w-24 h-24 rounded-2xl bg-slate-800 border-2 border-dashed border-slate-700 overflow-hidden flex items-center justify-center shrink-0">
+            <div className="flex flex-col sm:flex-row items-center gap-5 p-4 bg-[#181818] rounded-2xl border border-[#222222]">
+              <div className="relative group w-24 h-24 rounded-2xl bg-[#101010] border-2 border-dashed border-[#333333] overflow-hidden flex items-center justify-center shrink-0">
                 {previewUrl ? (
                   <img
                     src={previewUrl}
@@ -221,13 +221,13 @@ export const UpdateDaoImageModal: React.FC<UpdateDaoImageModalProps> = ({
                     className="w-full h-full object-cover"
                   />
                 ) : (
-                  <ImageIcon className="w-8 h-8 text-slate-500" />
+                  <ImageIcon className="w-8 h-8 text-[#555555]" />
                 )}
                 {isAuthorized && (
                   <button
                     type="button"
                     onClick={() => fileInputRef.current?.click()}
-                    className="absolute inset-0 bg-slate-950/60 opacity-0 group-hover:opacity-100 transition flex items-center justify-center text-white text-xs font-semibold"
+                    className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition flex items-center justify-center text-white text-xs font-semibold"
                   >
                     Change
                   </button>
@@ -247,12 +247,12 @@ export const UpdateDaoImageModal: React.FC<UpdateDaoImageModalProps> = ({
                   type="button"
                   onClick={() => fileInputRef.current?.click()}
                   disabled={!isAuthorized || isWorking}
-                  className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 disabled:opacity-50 disabled:cursor-not-allowed text-slate-200 text-xs font-semibold border border-slate-700 transition"
+                  className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-[#222222] hover:bg-[#2a2a2a] disabled:opacity-50 disabled:cursor-not-allowed text-white text-xs font-semibold border border-[#333333] transition"
                 >
-                  <Upload className="w-3.5 h-3.5 text-brand-400" />
+                  <Upload className="w-3.5 h-3.5 text-[#c8ff00]" />
                   <span>Choose Image File</span>
                 </button>
-                <p className="text-[11px] text-slate-500">
+                <p className="text-[11px] text-[#777777]">
                   Recommended: Square JPG, PNG, WebP or SVG up to 10MB. Automatically pinned to IPFS.
                 </p>
               </div>
@@ -260,7 +260,7 @@ export const UpdateDaoImageModal: React.FC<UpdateDaoImageModalProps> = ({
 
             {/* Description / Mission */}
             <div>
-              <label className="text-xs font-medium text-slate-300 block mb-1">
+              <label className="text-xs font-medium text-[#aaaaaa] block mb-1">
                 DAO Description / Mission (Optional)
               </label>
               <textarea
@@ -268,13 +268,13 @@ export const UpdateDaoImageModal: React.FC<UpdateDaoImageModalProps> = ({
                 onChange={(e) => setDescription(e.target.value)}
                 rows={3}
                 placeholder="Brief summary of the DAO's purpose, vision, or community guidelines..."
-                className="w-full bg-slate-900 border border-slate-800 rounded-xl px-4 py-2.5 text-xs text-slate-100 placeholder:text-slate-600 focus:outline-none focus:border-brand-500 resize-none"
+                className="w-full bg-[#181818] border border-[#222222] rounded-2xl px-4 py-2.5 text-xs text-white placeholder:text-[#555555] focus:outline-none focus:border-[#c8ff00] resize-none"
               />
             </div>
 
             {/* Error banner */}
             {(pinataError || writeError || receiptError) && (
-              <div className="p-3 bg-rose-500/10 border border-rose-500/20 rounded-xl text-xs text-rose-400 flex items-start gap-2">
+              <div className="p-3 bg-rose-500/10 border border-rose-500/20 rounded-2xl text-xs text-rose-400 flex items-start gap-2">
                 <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
                 <span className="flex-1 break-words">
                   {pinataError || (writeError as any)?.shortMessage || (writeError as any)?.message || 'Transaction failed'}
@@ -288,7 +288,7 @@ export const UpdateDaoImageModal: React.FC<UpdateDaoImageModalProps> = ({
                 type="button"
                 onClick={onClose}
                 disabled={isWorking}
-                className="px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 font-semibold text-xs transition"
+                className="px-5 py-2.5 rounded-full bg-[#181818] hover:bg-[#222222] text-[#888888] font-semibold text-xs transition"
               >
                 Cancel
               </button>
@@ -296,7 +296,7 @@ export const UpdateDaoImageModal: React.FC<UpdateDaoImageModalProps> = ({
               <button
                 type="submit"
                 disabled={isWorking || !isAuthorized}
-                className="flex-1 py-2.5 rounded-xl bg-brand-600 hover:bg-brand-500 disabled:opacity-50 disabled:cursor-not-allowed text-slate-950 font-bold text-xs transition flex items-center justify-center gap-2 shadow-lg shadow-brand-500/10"
+                className="flex-1 py-2.5 rounded-full bg-[#c8ff00] hover:bg-[#b8eb00] disabled:opacity-50 disabled:cursor-not-allowed text-black font-semibold text-xs transition flex items-center justify-center gap-2"
               >
                 {!isAuthorized ? (
                   <span>Unauthorized (Creator Only)</span>

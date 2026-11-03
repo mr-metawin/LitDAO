@@ -104,65 +104,65 @@ export const DelegateCard: React.FC<DelegateCardProps> = ({ tokenAddress, tokenS
   const isPending = isWritePending || isTxWaiting;
 
   return (
-    <div className="bg-[#101726] border border-slate-800 rounded-2xl p-6 shadow-md">
-      <div className="flex items-center justify-between mb-4">
-        <div className="flex items-center gap-2.5">
-          <div className="w-9 h-9 rounded-xl bg-purple-500/10 border border-purple-500/20 flex items-center justify-center text-purple-400">
-            <ShieldCheck className="w-5 h-5 text-purple-400" />
+    <div className="bg-[#121212] border border-[#222222] rounded-3xl p-6 shadow-2xl">
+      <div className="flex items-center justify-between mb-5">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-2xl bg-[#1c1c1c] border border-[#282828] flex items-center justify-center text-[#c8ff00]">
+            <ShieldCheck className="w-5 h-5 text-[#c8ff00]" />
           </div>
           <div>
             <h3 className="font-bold text-white text-base">Voting Delegation</h3>
-            <p className="text-xs text-slate-400">ERC20Votes checkpointing</p>
+            <p className="text-xs text-[#777777]">ERC20Votes checkpointing</p>
           </div>
         </div>
-        <span className="text-xs px-2.5 py-1 rounded-full font-mono bg-slate-900 border border-slate-800 text-slate-300">
+        <span className="text-xs px-3 py-1 rounded-full font-mono bg-[#1c1c1c] border border-[#282828] text-white">
           {tokenSymbol}
         </span>
       </div>
 
       {!isConnected ? (
-        <div className="text-center py-6 text-sm text-slate-400">
+        <div className="text-center py-6 text-sm text-[#777777]">
           Connect your wallet to inspect balance & activate voting power.
         </div>
       ) : (
         <div className="space-y-4">
           {/* Balance & Voting Power Stats */}
-          <div className="grid grid-cols-2 gap-3 bg-slate-900/60 p-3.5 rounded-xl border border-slate-800/80">
+          <div className="grid grid-cols-2 gap-3 bg-[#181818] p-4 rounded-2xl border border-[#242424]">
             <div>
-              <span className="text-xs text-slate-400 block mb-1">Your Token Balance</span>
-              <span className="text-base font-bold text-slate-100 font-mono">
-                {formattedBalance} <span className="text-xs font-normal text-slate-400">{tokenSymbol}</span>
+              <span className="text-xs text-[#777777] block mb-1">Your Token Balance</span>
+              <span className="text-lg font-bold text-white font-mono">
+                {formattedBalance} <span className="text-xs font-normal text-[#888888]">{tokenSymbol}</span>
               </span>
             </div>
             <div>
-              <span className="text-xs text-slate-400 block mb-1">Active Voting Power</span>
-              <span className={`text-base font-bold font-mono ${rawVotes > 0n ? 'text-brand-400' : 'text-slate-400'}`}>
-                {formattedVotes} <span className="text-xs font-normal text-slate-400">Votes</span>
+              <span className="text-xs text-[#777777] block mb-1">Active Voting Power</span>
+              <span className={`text-lg font-bold font-mono ${rawVotes > 0n ? 'text-[#c8ff00]' : 'text-[#888888]'}`}>
+                {formattedVotes} <span className="text-xs font-normal text-[#777777]">Votes</span>
               </span>
             </div>
           </div>
 
           {/* Delegation Status Alert */}
           {hasTokensWithoutVotes && (
-            <div className="p-3 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-300 text-xs flex items-start gap-2">
-              <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
+            <div className="p-3.5 rounded-2xl bg-amber-500/10 border border-amber-500/25 text-amber-300 text-xs flex items-start gap-2.5">
+              <AlertCircle className="w-4 h-4 shrink-0 mt-0.5 text-amber-400" />
               <div>
-                <strong>Voting power is not active!</strong> You own {tokenSymbol} tokens, but haven't delegated voting rights yet. Click <strong>Activate Voting Power</strong> below.
+                <strong>Voting power is inactive!</strong> You hold {tokenSymbol} tokens, but haven't delegated voting rights yet. Click <strong>Activate Voting Power</strong> below.
               </div>
             </div>
           )}
 
           {isSelfDelegated && (
-            <div className="p-2.5 rounded-xl bg-brand-500/10 border border-brand-500/20 text-brand-300 text-xs flex items-center gap-2">
-              <CheckCircle2 className="w-4 h-4 shrink-0 text-brand-400" />
+            <div className="p-3 rounded-2xl bg-[#162300] border border-[#c8ff00]/30 text-[#c8ff00] text-xs flex items-center gap-2">
+              <CheckCircle2 className="w-4 h-4 shrink-0 text-[#c8ff00]" />
               <span>Self-delegated. Your tokens count towards your voting power!</span>
             </div>
           )}
 
           {/* Current Delegatee Info */}
           <div className="flex items-center justify-between text-xs py-1 px-1">
-            <span className="text-slate-400">Delegated To</span>
-            <span className="font-mono text-slate-300">
+            <span className="text-[#777777]">Delegated To</span>
+            <span className="font-mono text-white">
               {hasZeroDelegation
                 ? 'None (0x0)'
                 : isSelfDelegated
@@ -171,20 +171,20 @@ export const DelegateCard: React.FC<DelegateCardProps> = ({ tokenAddress, tokenS
             </span>
           </div>
 
-          {/* Action Buttons */}
+          {/* Action Buttons: OKX Style */}
           <div className="flex flex-col gap-2 pt-1">
             <button
               onClick={handleSelfDelegate}
               disabled={isPending || isSelfDelegated}
-              className={`w-full py-2.5 px-4 rounded-xl font-semibold text-sm flex items-center justify-center gap-2 transition ${
+              className={`w-full py-3 px-4 rounded-2xl font-bold text-sm flex items-center justify-center gap-2 transition active:scale-[0.99] ${
                 isSelfDelegated
-                  ? 'bg-slate-800 text-slate-500 cursor-not-allowed border border-slate-700/40'
-                  : 'bg-brand-600 hover:bg-brand-500 text-slate-950 shadow-md shadow-brand-500/10'
+                  ? 'bg-[#181818] text-[#555555] cursor-not-allowed border border-[#242424]'
+                  : 'bg-[#c8ff00] hover:bg-[#b5e600] text-black shadow-lg shadow-[#c8ff00]/10'
               }`}
             >
               {isPending ? (
                 <>
-                  <Loader2 className="w-4 h-4 animate-spin" />
+                  <Loader2 className="w-4 h-4 animate-spin text-black" />
                   <span>Delegating on LitVM...</span>
                 </>
               ) : (
@@ -198,9 +198,9 @@ export const DelegateCard: React.FC<DelegateCardProps> = ({ tokenAddress, tokenS
             <button
               type="button"
               onClick={() => setShowCustomInput(!showCustomInput)}
-              className="text-xs text-slate-400 hover:text-slate-300 underline self-center py-1"
+              className="text-xs text-[#888888] hover:text-white underline self-center py-1 transition"
             >
-              {showCustomInput ? 'Cancel custom delegation' : 'Delegate to another wallet'}
+              {showCustomInput ? 'Cancel custom delegation' : 'Delegate to another address'}
             </button>
 
             {showCustomInput && (
@@ -210,13 +210,13 @@ export const DelegateCard: React.FC<DelegateCardProps> = ({ tokenAddress, tokenS
                   placeholder="0x... delegatee address"
                   value={customDelegatee}
                   onChange={(e) => setCustomDelegatee(e.target.value)}
-                  className="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs text-slate-200 font-mono focus:border-brand-500 focus:outline-none"
+                  className="w-full bg-[#181818] border border-[#2e2e2e] rounded-2xl px-4 py-2.5 text-xs text-white font-mono focus:border-[#c8ff00] focus:outline-none"
                 />
                 <button
                   type="button"
                   onClick={handleCustomDelegate}
                   disabled={isPending || !isAddress(customDelegatee)}
-                  className="w-full py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-semibold text-white disabled:opacity-50 transition border border-slate-700"
+                  className="w-full py-2.5 rounded-2xl bg-white hover:bg-neutral-200 text-black text-xs font-bold disabled:opacity-50 transition"
                 >
                   Delegate to Custom Address
                 </button>
@@ -225,7 +225,7 @@ export const DelegateCard: React.FC<DelegateCardProps> = ({ tokenAddress, tokenS
           </div>
 
           {writeError && (
-            <p className="text-xs text-rose-400 bg-rose-500/10 p-2.5 rounded-lg border border-rose-500/20 break-words">
+            <p className="text-xs text-rose-400 bg-rose-500/10 p-3 rounded-2xl border border-rose-500/20 break-words">
               {writeError.message.includes('max fee per gas less than block base fee')
                 ? 'Gas fee fluctuation on LitVM. Please try again with updated gas.'
                 : (writeError as any).shortMessage || writeError.message.slice(0, 180)}

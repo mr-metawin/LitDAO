@@ -15,6 +15,7 @@ dataSources:
       language: wasm/assemblyscript
       entities:
         - DAO
+        - TokenDAO
       abis:
         - name: DAORegistry
           file: ./abis/DAORegistry.json
@@ -59,6 +60,7 @@ dataSources:
       language: wasm/assemblyscript
       entities:
         - DAO
+        - TokenDAO
       abis:
         - name: GovernorFactory
           file: ./abis/GovernorFactory.json
@@ -154,6 +156,7 @@ templates:
         - DAO
         - TokenHolder
         - Delegate
+        - TokenDAO
       abis:
         - name: DAOToken
           file: ./abis/DAOToken.json

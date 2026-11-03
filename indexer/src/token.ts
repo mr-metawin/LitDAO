@@ -4,7 +4,7 @@ import {
   DelegateChanged,
   DelegateVotesChanged
 } from "../generated/templates/TokenTemplate/DAOToken";
-import { TokenHolder, Delegate } from "../generated/schema";
+import { TokenHolder, Delegate, DAO, TokenDAO } from "../generated/schema";
 
 let ZERO_ADDRESS = "0x0000000000000000000000000000000000000000";
 
@@ -14,14 +14,33 @@ export function handleTransfer(event: Transfer): void {
   let toAddr = event.params.to.toHexString().toLowerCase();
   let value = event.params.value;
 
+  // Ignore 0-value transfers or transfers to self
+  if (value.equals(BigInt.zero()) || fromAddr == toAddr) {
+    return;
+  }
+
+  let tokenDao = TokenDAO.load(tokenAddr);
+  if (tokenDao == null) {
+    tokenDao = new TokenDAO(tokenAddr);
+    tokenDao.holderCount = BigInt.zero();
+  }
+
   // Process sender (unless mint)
   if (fromAddr != ZERO_ADDRESS) {
     let fromHolderId = tokenAddr + "-" + fromAddr;
     let fromHolder = TokenHolder.load(fromHolderId);
     if (fromHolder != null) {
-      fromHolder.balance = fromHolder.balance.minus(value);
+      let prevBalance = fromHolder.balance;
+      let newBalance = prevBalance.minus(value);
+      fromHolder.balance = newBalance;
       fromHolder.updatedAt = event.block.timestamp;
       fromHolder.save();
+
+      if (prevBalance.gt(BigInt.zero()) && newBalance.equals(BigInt.zero())) {
+        if (tokenDao.holderCount.gt(BigInt.zero())) {
+          tokenDao.holderCount = tokenDao.holderCount.minus(BigInt.fromI32(1));
+        }
+      }
     }
   }
 
@@ -29,15 +48,34 @@ export function handleTransfer(event: Transfer): void {
   if (toAddr != ZERO_ADDRESS) {
     let toHolderId = tokenAddr + "-" + toAddr;
     let toHolder = TokenHolder.load(toHolderId);
+    let prevBalance = BigInt.zero();
     if (toHolder == null) {
       toHolder = new TokenHolder(toHolderId);
       toHolder.token = event.address;
       toHolder.account = event.params.to;
       toHolder.balance = BigInt.zero();
+    } else {
+      prevBalance = toHolder.balance;
     }
-    toHolder.balance = toHolder.balance.plus(value);
+    let newBalance = prevBalance.plus(value);
+    toHolder.balance = newBalance;
     toHolder.updatedAt = event.block.timestamp;
     toHolder.save();
+
+    if (prevBalance.equals(BigInt.zero()) && newBalance.gt(BigInt.zero())) {
+      tokenDao.holderCount = tokenDao.holderCount.plus(BigInt.fromI32(1));
+    }
+  }
+
+  tokenDao.save();
+
+  // If this token is linked to a DAO, synchronize dao.holderCount
+  if (tokenDao.dao != null) {
+    let dao = DAO.load(tokenDao.dao!);
+    if (dao != null) {
+      dao.holderCount = tokenDao.holderCount;
+      dao.save();
+    }
   }
 }
 
