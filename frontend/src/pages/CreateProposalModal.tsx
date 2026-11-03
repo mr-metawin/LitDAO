@@ -268,7 +268,7 @@ export const CreateProposalModal: React.FC<CreateProposalModalProps> = ({
                 {isPending ? (
                   <>
                     <Loader2 className="w-4 h-4 animate-spin" />
-                    <span>Broadcasting to LitVM...</span>
+                    <span>Submitting Proposal...</span>
                   </>
                 ) : (
                   <>
