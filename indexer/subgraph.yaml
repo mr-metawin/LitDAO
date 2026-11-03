@@ -8,7 +8,7 @@ dataSources:
     source:
       address: "0xfF8c3453f5617C0483e3D2f38F70126772D6F247"
       abi: DAORegistry
-      startBlock: 67467402
+      startBlock: 67472366
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.7
@@ -32,7 +32,7 @@ dataSources:
     source:
       address: "0x9b3E75Df9bBBCD2b60645ecb473d838f3eAa5dea"
       abi: TokenFactory
-      startBlock: 67467402
+      startBlock: 67471730
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.7
@@ -53,7 +53,7 @@ dataSources:
     source:
       address: "0xfE6e5f87AA0be25c73BeF342217F2b170C9e38a2"
       abi: GovernorFactory
-      startBlock: 67467402
+      startBlock: 67472366
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.7
@@ -75,7 +75,7 @@ dataSources:
     source:
       address: "0x01aD919d404Cd4a67F990499753fEBB78d21ED6b"
       abi: FaucetFactory
-      startBlock: 67467402
+      startBlock: 67472366
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.7
@@ -96,7 +96,7 @@ dataSources:
     source:
       address: "0x92621936C0E61E0371bFE2A5BC37f7569ca3e9a2"
       abi: DAOMetadataRegistry
-      startBlock: 67467402
+      startBlock: 67472366
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.7
