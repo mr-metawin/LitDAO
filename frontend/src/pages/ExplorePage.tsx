@@ -227,7 +227,7 @@ export const ExplorePage: React.FC = () => {
         <button
           onClick={() => setShowSupportModal(true)}
           className="w-14 h-14 p-3.5 rounded-full bg-[#c8ff00] hover:bg-[#b5e600] text-black shadow-xl shadow-[#c8ff00]/20 flex items-center justify-center transition-transform hover:scale-110 active:scale-95"
-          title="LitDAO Protocol Hub"
+          title="Agora Protocol Hub"
         >
           <Headphones className="w-6 h-6 stroke-[2.2]" />
         </button>
@@ -243,7 +243,7 @@ export const ExplorePage: React.FC = () => {
                   <Headphones className="w-5 h-5" />
                 </div>
                 <div>
-                  <h3 className="font-extrabold text-lg text-white">LitDAO Quick Hub</h3>
+                  <h3 className="font-extrabold text-lg text-white">Agora Quick Hub</h3>
                   <p className="text-xs text-[#777777]">LiteForge Network & Resources</p>
                 </div>
               </div>

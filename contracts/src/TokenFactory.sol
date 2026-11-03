@@ -36,7 +36,7 @@ contract TokenFactory {
 
     /**
      * @notice Deploy a new governance token
-     * @param name Name of the token (e.g. "LitDAO Token")
+     * @param name Name of the token (e.g. "Agora Token")
      * @param symbol Symbol of the token (e.g. "LTK")
      * @param initialSupply Amount of tokens minted to initialOwner (in wei)
      * @param initialOwner Initial owner who receives supply and admin/minter roles

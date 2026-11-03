@@ -1,6 +1,6 @@
 import React from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
-import { Navbar, PixelXLogo } from './components/Navbar';
+import { Navbar, AgoraLogo } from './components/Navbar';
 import { GasWarningBanner } from './components/GasWarningBanner';
 import { ExplorePage } from './pages/ExplorePage';
 import { DaoDetailPage } from './pages/DaoDetailPage';
@@ -42,8 +42,8 @@ export const App: React.FC = () => {
         <footer className="border-t border-[#1c1c1c] bg-[#000000] py-10 mt-20 text-xs text-[#777777]">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-6">
             <div className="flex items-center gap-3">
-              <PixelXLogo className="w-5 h-5" />
-              <span className="font-bold text-white tracking-tight">LitDAO Protocol</span>
+              <AgoraLogo className="w-6 h-6 rounded-full object-cover" />
+              <span className="font-bold text-white tracking-tight">Agora Protocol</span>
               <span>•</span>
               <span className="text-[#666666]">Native Governance for LitVM LiteForge (4441)</span>
             </div>

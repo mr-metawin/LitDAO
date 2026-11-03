@@ -3,16 +3,17 @@ import { Link, useLocation } from 'react-router-dom';
 import { ConnectButton } from '@rainbow-me/rainbowkit';
 import { Plus } from 'lucide-react';
 
-export const PixelXLogo: React.FC<{ className?: string }> = ({ className = 'w-6 h-6' }) => (
-  <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className={className}>
-    {/* 5 blocks arranged in an X/cross, each 5x5 */}
-    <rect x="2" y="2" width="6" height="6" rx="1.2" fill="#c8ff00" />
-    <rect x="16" y="2" width="6" height="6" rx="1.2" fill="#c8ff00" />
-    <rect x="9" y="9" width="6" height="6" rx="1.2" fill="#c8ff00" />
-    <rect x="2" y="16" width="6" height="6" rx="1.2" fill="#c8ff00" />
-    <rect x="16" y="16" width="6" height="6" rx="1.2" fill="#c8ff00" />
-  </svg>
+import agoraLogo from '../../agora.jpeg';
+
+export const AgoraLogo: React.FC<{ className?: string }> = ({ className = 'w-7 h-7' }) => (
+  <img
+    src={agoraLogo}
+    alt="Agora Logo"
+    className={`${className} rounded-full object-cover`}
+  />
 );
+
+export const PixelXLogo = AgoraLogo;
 
 export const Navbar: React.FC = () => {
   const location = useLocation();
@@ -28,11 +29,11 @@ export const Navbar: React.FC = () => {
         <div className="flex items-center gap-4 sm:gap-7">
           <Link to="/" className="flex items-center gap-2.5 group shrink-0">
             <div className="flex items-center justify-center group-hover:scale-105 transition-transform">
-              <PixelXLogo className="w-6 h-6 drop-shadow-[0_0_12px_rgba(200,255,0,0.5)]" />
+              <AgoraLogo className="w-8 h-8 rounded-full object-cover drop-shadow-[0_0_12px_rgba(45,212,191,0.35)]" />
             </div>
             <div className="flex items-center gap-1.5">
               <span className="font-extrabold text-lg sm:text-xl tracking-tight text-white">
-                LitDAO
+                Agora
               </span>
               <span className="hidden xs:inline-block text-[10px] font-semibold tracking-wider px-1.5 py-0.5 rounded-md bg-[#181818] text-[#8e8e8e] border border-[#282828]">
                 Web3

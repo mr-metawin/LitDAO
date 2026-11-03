@@ -1,7 +1,7 @@
 {
-  "name": "litdao-indexer",
+  "name": "agora-indexer",
   "version": "1.0.1",
-  "description": "Goldsky Subgraph for LitDAO platform on liteforge",
+  "description": "Goldsky Subgraph for Agora platform on liteforge",
   "scripts": {
     "codegen": "graph codegen",
     "build": "graph build",

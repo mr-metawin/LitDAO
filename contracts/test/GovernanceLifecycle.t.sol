@@ -59,7 +59,7 @@ contract GovernanceLifecycleTest is Test {
 
         // 6. Alice deploys governor + timelock
         GovernorFactory.GovernorParams memory params = GovernorFactory.GovernorParams({
-            name: "LitDAO",
+            name: "Agora",
             token: address(token),
             votingDelay: VOTING_DELAY,
             votingPeriod: VOTING_PERIOD,
@@ -117,7 +117,7 @@ contract GovernanceLifecycleTest is Test {
         assertEq(dao.token, address(token));
         assertEq(dao.timelock, address(timelock));
         assertEq(dao.registrant, alice);
-        assertEq(dao.name, "LitDAO");
+        assertEq(dao.name, "Agora");
     }
 
     function test_RevertIf_InvalidGovernorParams() public {

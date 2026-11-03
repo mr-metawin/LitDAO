@@ -4,7 +4,7 @@ import { http } from 'viem';
 import { litvm } from './chain';
 
 export const config = getDefaultConfig({
-  appName: 'LitDAO',
+  appName: 'Agora',
   projectId: 'a05b38d3ca3484f707f1f0a2ba18e77a', // standard public demo project ID
   chains: [litvm],
   transports: {

@@ -1,6 +1,6 @@
-# LitDAO Subgraph (Goldsky Indexer)
+# Agora Subgraph (Goldsky Indexer)
 
-Production GraphQL indexer for the LitDAO governance platform on **liteforge LiteForge (Chain ID: 4441)**.
+Production GraphQL indexer for the Agora governance platform on **liteforge LiteForge (Chain ID: 4441)**.
 
 ## Architecture
 
