@@ -15,6 +15,7 @@
   <a href="https://goldsky.com/"><img src="https://img.shields.io/badge/Indexed_by-Goldsky-purple.svg?style=flat-square" alt="Goldsky" /></a>
   <a href="https://vitejs.dev/"><img src="https://img.shields.io/badge/Frontend-React_18_%2B_Vite-646CFF.svg?style=flat-square" alt="Vite" /></a>
   <a href="https://tailwindcss.com/"><img src="https://img.shields.io/badge/UI-Tailwind_CSS-38B2AC.svg?style=flat-square" alt="Tailwind CSS" /></a>
+  <a href="https://x.com/thelumenxyz"><img src="https://img.shields.io/badge/X-@thelumenxyz-000000.svg?style=flat-square&logo=x" alt="X @thelumenxyz" /></a>
 </p>
 
 ---

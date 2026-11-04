@@ -51,10 +51,11 @@ export const App: React.FC = () => {
             <div className="flex flex-wrap items-center gap-5 sm:gap-6 font-medium">
               {/* Social Links */}
               <a
-                href="#"
-                onClick={(e) => e.preventDefault()}
+                href="https://x.com/thelumenxyz"
+                target="_blank"
+                rel="noopener noreferrer"
                 className="hover:text-white transition flex items-center gap-1.5 group"
-                title="Follow on X"
+                title="Follow on X (@thelumenxyz)"
               >
                 <XSocialIcon className="w-3.5 h-3.5 text-[#777777] group-hover:text-[#c8ff00] transition" />
                 <span>X</span>
