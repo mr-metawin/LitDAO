@@ -3,17 +3,17 @@ import { Link, useLocation } from 'react-router-dom';
 import { ConnectButton } from '@rainbow-me/rainbowkit';
 import { Plus } from 'lucide-react';
 
-import agoraLogo from '../../agora.jpeg';
+import lumenLogo from '../../lumen.jpeg';
 
-export const AgoraLogo: React.FC<{ className?: string }> = ({ className = 'w-7 h-7' }) => (
+export const LumenLogo: React.FC<{ className?: string }> = ({ className = 'w-7 h-7' }) => (
   <img
-    src={agoraLogo}
-    alt="Agora Logo"
+    src={lumenLogo}
+    alt="Lumen Logo"
     className={`${className} rounded-full object-cover`}
   />
 );
 
-export const PixelXLogo = AgoraLogo;
+export const PixelXLogo = LumenLogo;
 
 export const Navbar: React.FC = () => {
   const location = useLocation();
@@ -29,11 +29,11 @@ export const Navbar: React.FC = () => {
         <div className="flex items-center gap-4 sm:gap-7">
           <Link to="/" className="flex items-center gap-2.5 group shrink-0">
             <div className="flex items-center justify-center group-hover:scale-105 transition-transform">
-              <AgoraLogo className="w-8 h-8 rounded-full object-cover drop-shadow-[0_0_12px_rgba(45,212,191,0.35)]" />
+              <LumenLogo className="w-8 h-8 rounded-full object-cover drop-shadow-[0_0_12px_rgba(45,212,191,0.35)]" />
             </div>
             <div className="flex items-center gap-1.5">
               <span className="font-extrabold text-lg sm:text-xl tracking-tight text-white">
-                Agora
+                Lumen
               </span>
               <span className="hidden xs:inline-block text-[10px] font-semibold tracking-wider px-1.5 py-0.5 rounded-md bg-[#181818] text-[#8e8e8e] border border-[#282828]">
                 Web3

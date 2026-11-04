@@ -1,7 +1,7 @@
 {
-  "name": "agora-indexer",
+  "name": "lumen-indexer",
   "version": "1.0.1",
-  "description": "Goldsky Subgraph for Agora platform on liteforge",
+  "description": "Goldsky Subgraph for Lumen platform on liteforge",
   "scripts": {
     "codegen": "graph codegen",
     "build": "graph build",

@@ -17,7 +17,7 @@ contract DeployLitDAO is Script {
 
         address deployer = msg.sender;
         console.log("--------------------------------------------------");
-        console.log("Agora Deployment to liteforge LiteForge (Chain ID: 4441)");
+        console.log("Lumen Deployment to liteforge LiteForge (Chain ID: 4441)");
         console.log("Deployer address:", deployer);
         console.log("--------------------------------------------------");
 

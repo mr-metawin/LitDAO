@@ -1,8 +1,8 @@
 <p align="center">
-  <img src="frontend/agora.jpeg" width="120" height="120" alt="Agora Logo" style="border-radius: 50%; object-fit: cover;" />
+  <img src="frontend/lumen.jpeg" width="120" height="120" alt="Lumen Logo" style="border-radius: 50%; object-fit: cover;" />
 </p>
 
-<h1 align="center">Agora</h1>
+<h1 align="center">Lumen</h1>
 
 <p align="center">
   <strong>Native Onchain Governance Protocol & DAO Operating System for LitVM LiteForge</strong>
@@ -41,9 +41,9 @@
 
 ## Overview
 
-**Agora** is a full-stack, modular governance infrastructure protocol built natively for **LitVM LiteForge (Chain ID: 4441)**. 
+**Lumen** is a full-stack, modular governance infrastructure protocol built natively for **LitVM LiteForge (Chain ID: 4441)**. 
 
-Agora empowers communities, developers, and autonomous agents to launch production-grade decentralized organizations in minutes. Every DAO deployed on Agora features:
+Lumen empowers communities, developers, and autonomous agents to launch production-grade decentralized organizations in minutes. Every DAO deployed on Lumen features:
 - Standard OpenZeppelin ERC20Votes governance tokens with snapshot voting power.
 - Multi-step OpenZeppelin Governor architectures secured by dedicated TimelockControllers.
 - An immutable onchain registry and an extensible decentralized metadata registry backed by IPFS.
@@ -56,7 +56,7 @@ Agora empowers communities, developers, and autonomous agents to launch producti
 
 ```mermaid
 flowchart TD
-    User["👤 Community / DAO Creator / Voter"] -->|"Web3 Interaction (Wagmi / RainbowKit)"| Frontend["🖥️ Agora Frontend (React 18 + Vite)"]
+    User["👤 Community / DAO Creator / Voter"] -->|"Web3 Interaction (Wagmi / RainbowKit)"| Frontend["🖥️ Lumen Frontend (React 18 + Vite)"]
 
     subgraph CalderaLitVM["⚡ LitVM LiteForge (Chain ID: 4441)"]
         Registry["🏛️ DAORegistry"]
@@ -173,7 +173,7 @@ LitDAO/
 │   │   ├── config/             # Wagmi, Caldera chain, contract ABIs
 │   │   ├── services/           # Pinata IPFS & Goldsky GraphQL services
 │   │   └── types/              # TypeScript interface definitions
-│   ├── public/                 # Static assets & Agora branding logo
+│   ├── public/                 # Static assets & Lumen branding logo
 │   └── vite.config.ts          # Vite build config
 │
 ├── indexer/                    # Goldsky Subgraph indexer
